@@ -1,0 +1,98 @@
+{
+  "slug": "slack",
+  "name": "Slack",
+  "website": "https://slack.com",
+  "category": "Communication",
+  "mode": "curated",
+  "updatedAt": "2026-10-27",
+  "summary": "Self-serve and no review is required. A new Slack app installs only in the workspace where you created it, so you must turn on public distribution (instant, takes a checklist) before customers can connect. A Marketplace listing is optional and reviewed. You need HTTPS everywhere and correct bot vs user scopes.",
+  "verdict": {
+    "difficulty": 2,
+    "label": "Easy",
+    "timeToFirstConnection": "~20 minutes (your own workspace)",
+    "timeToProduction": "Same day, after you activate public distribution",
+    "approvalWait": "None for public distribution. The Slack Marketplace listing is a separate review with extra prerequisites.",
+    "handsOnEffort": "1–2 hours, including HTTPS redirect setup and testing in a second workspace",
+    "confidence": "high"
+  },
+  "decideFirst": [
+    {
+      "question": "Bot token, user token, or both?",
+      "guidance": "Bot scopes give a bot token (xoxb-) that acts as your app. User scopes give a user token (xoxp-) that acts as the installing user. An agent that reads a user's DMs or searches as them needs user scopes. Configure the scope list that matches what your authorize URL requests.",
+      "evidence": { "status": "sourced", "sources": ["unified-slack"] }
+    },
+    {
+      "question": "Unlisted public distribution, or a Marketplace listing?",
+      "guidance": "Public distribution lets any workspace install your app through your own install link, with no review. Some workspaces only allow Marketplace-listed apps, or only let admins install apps. That is when a listing matters.",
+      "evidence": { "status": "verified", "sources": ["slack-dist"] }
+    }
+  ],
+  "phases": [
+    {
+      "name": "1 · Create the app",
+      "goal": "Install in your own workspace",
+      "duration": "~20 min",
+      "steps": [
+        { "title": "Create an app at api.slack.com/apps", "detail": "Start from a manifest. The agent can write the manifest YAML with your scopes and redirect URLs.", "owner": "agent", "url": "https://api.slack.com/apps", "evidence": { "status": "sourced", "sources": ["unified-slack"] } },
+        { "title": "Add redirect URLs under OAuth & Permissions", "detail": "Must be HTTPS and can't contain an anchor (#). Slack doesn't accept http://, even for localhost. Use a tunnel for local testing.", "owner": "you", "evidence": { "status": "verified", "sources": ["slack-oauth"], "note": "The 'not even localhost' detail comes from a secondary source" } },
+        { "title": "Add bot and/or user scopes", "detail": "You can't remove scopes from an existing token without revoking it, so start small.", "owner": "agent", "evidence": { "status": "verified", "sources": ["slack-oauth"] } },
+        { "title": "Copy client ID, client secret, and signing secret", "detail": "These are under Basic Information → App Credentials.", "owner": "you", "evidence": { "status": "sourced", "sources": ["unified-slack"] } }
+      ]
+    },
+    {
+      "name": "2 · Build the install flow",
+      "goal": "Exchange code for tokens",
+      "duration": "30–60 min",
+      "steps": [
+        { "title": "Redirect to slack.com/oauth/v2/authorize, then call oauth.v2.access", "detail": "If you register several redirect URLs, send the same redirect_uri in both steps or the exchange fails. The agent can write and test this.", "owner": "agent", "evidence": { "status": "verified", "sources": ["slack-oauth"] } }
+      ]
+    },
+    {
+      "name": "3 · Open it to other workspaces",
+      "goal": "Any customer workspace can connect",
+      "duration": "~10 min",
+      "steps": [
+        { "title": "Manage Distribution → complete checklist → Activate Public Distribution", "detail": "Every URL must use SSL. Remove hard-coded tokens. Slack's docs say activation needs no review.", "owner": "you", "evidence": { "status": "verified", "sources": ["slack-dist", "nango-slack"] } },
+        { "title": "Test from a different workspace", "detail": "Use an incognito window and a workspace that isn't your dev workspace.", "owner": "you", "evidence": { "status": "sourced", "sources": ["nango-slack"] } },
+        { "title": "(Optional) Submit to the Slack Marketplace", "detail": "Reviewed listing. One integration platform reports these prerequisites: 5+ active workspace installs and a security review of your endpoints.", "owner": "provider", "evidence": { "status": "uncertain", "sources": ["unified-slack"], "note": "Thresholds not checked against Slack's own Marketplace guidelines" } }
+      ]
+    }
+  ],
+  "requirements": [
+    { "item": "HTTPS redirect URLs (no anchors)", "requiredFor": "Always", "evidence": { "status": "verified", "sources": ["slack-oauth"] } },
+    { "item": "SSL on all app URLs + no hard-coded tokens", "requiredFor": "Public distribution", "evidence": { "status": "verified", "sources": ["slack-dist"] } },
+    { "item": "Icon, privacy policy, support URL", "requiredFor": "Marketplace listing", "evidence": { "status": "sourced", "sources": ["unified-slack"] } }
+  ],
+  "blockers": [
+    { "symptom": "invalid_team_for_non_distributed_app", "cause": "Someone outside your dev workspace tried to install before distribution was on", "fix": "Activate Public Distribution. You don't need a Marketplace listing.", "evidence": { "status": "sourced", "sources": ["nango-slack"] } },
+    { "symptom": "bad_redirect_uri", "cause": "The redirect_uri doesn't match, isn't below a registered URL, or differs between authorize and exchange", "fix": "Send an identical redirect_uri in both calls and register the exact base URL.", "evidence": { "status": "verified", "sources": ["slack-oauth"] } },
+    { "symptom": "Install blocked in a customer workspace", "cause": "The workspace requires admin approval or allows only Marketplace apps", "fix": "Ask their admin to approve the app, or pursue a Marketplace listing.", "evidence": { "status": "verified", "sources": ["slack-dist"] } }
+  ],
+  "nuances": [
+    { "title": "Token rotation is opt-in and hard to undo", "detail": "With rotation on, access tokens expire after 12 hours and must be refreshed. Treat turning it on as one-way.", "evidence": { "status": "sourced", "sources": ["unified-slack"] } },
+    { "title": "PKCE apps always get expiring refresh tokens", "detail": "Per a March 2026 changelog: installs that redirect to a custom URI scheme always get rotating tokens, and PKCE-enabled refresh tokens expire after 30 days.", "evidence": { "status": "sourced", "sources": ["slack-pkce"] } },
+    { "title": "Turning distribution off uninstalls your app", "detail": "Deactivating public distribution removes the app from every workspace except the original. Once you are listed in the Marketplace, you can't deactivate this way.", "evidence": { "status": "verified", "sources": ["slack-dist"] } }
+  ],
+  "sources": [
+    { "id": "slack-oauth", "title": "Slack — Installing with OAuth", "url": "https://docs.slack.dev/authentication/installing-with-oauth/", "kind": "official", "retrieved": "search-result" },
+    { "id": "slack-dist", "title": "Slack — App lifecycle & distribution", "url": "https://docs.slack.dev/app-management/distribution/", "kind": "official", "retrieved": "search-result" },
+    { "id": "slack-pkce", "title": "Slack changelog — PKCE (2026-03-30)", "url": "https://docs.slack.dev/changelog/2026/03/30/pkce", "kind": "official", "retrieved": "search-result" },
+    { "id": "unified-slack", "title": "Unified.to — Slack OAuth app skill", "url": "https://docs.unified.to/skills/slack-oauth-app/SKILL.md", "kind": "secondary", "retrieved": "search-result" },
+    { "id": "nango-slack", "title": "Nango — Fix invalid_team_for_non_distributed_app", "url": "https://nango.dev/blog/fix-slack-oauth-error-invalid-team-for-non-distributed-app", "kind": "secondary", "retrieved": "search-result" }
+  ],
+  "verification": {
+    "checked": [
+      "HTTPS and no-anchor redirect rules, and the same-redirect_uri-in-both-steps rule, against Slack's 'Installing with OAuth' page",
+      "Distribution checklist, workspace install restrictions, and deactivation behavior against Slack's distribution page"
+    ],
+    "corrected": [
+      "Older guides link to api.slack.com docs. Slack's docs now live at docs.slack.dev, so we cite the new location."
+    ],
+    "unverified": [
+      "Marketplace listing prerequisites (5 active workspaces, security review) come from one secondary source.",
+      "The 12-hour rotating token lifetime comes from a secondary source."
+    ]
+  },
+  "consoleUrl": "https://api.slack.com/apps",
+  "docsUrl": "https://docs.slack.dev/authentication/installing-with-oauth/"
+}

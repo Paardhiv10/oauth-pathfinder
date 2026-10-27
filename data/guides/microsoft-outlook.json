@@ -1,0 +1,91 @@
+{
+  "slug": "microsoft-outlook",
+  "name": "Microsoft Outlook / Graph",
+  "website": "https://outlook.office.com",
+  "category": "Email & calendar",
+  "mode": "curated",
+  "updatedAt": "2026-10-27",
+  "summary": "Registering the app takes minutes. The hard part is consent in your customers' tenants. Without publisher verification, many ordinary users can't consent at all and are sent to their IT admin. Some permissions always need an admin. Publisher verification takes minutes if your company already has a verified Microsoft Cloud Partner Program account; if not, partner enrollment adds time.",
+  "verdict": {
+    "difficulty": 3,
+    "label": "Moderate",
+    "timeToFirstConnection": "~20–30 minutes (your own tenant)",
+    "timeToProduction": "Hours if you're already a verified Microsoft partner; days to weeks if you must enroll first",
+    "approvalWait": "No Microsoft app review. Partner Program verification has its own timeline, and some customers need a tenant admin to approve.",
+    "handsOnEffort": "Half a day, plus partner-program paperwork if you're new",
+    "confidence": "medium"
+  },
+  "decideFirst": [
+    {
+      "question": "Single-tenant or multitenant?",
+      "guidance": "For a product other companies' users connect to, register a multitenant app. Microsoft recommends this for ISVs. This choice affects every customer, and changing it later means a new client ID and every customer reconnecting.",
+      "evidence": { "status": "sourced", "sources": ["ms-establish", "unified-entra"] }
+    },
+    {
+      "question": "Delegated or application permissions?",
+      "guidance": "Delegated permissions act as the signed-in user. Most agents need these, e.g. Mail.Read and offline_access. Application permissions act without a user and always need admin consent.",
+      "evidence": { "status": "sourced", "sources": ["prismatic-graph"] }
+    }
+  ],
+  "phases": [
+    {
+      "name": "1 · Register the app",
+      "goal": "Client ID + secret",
+      "duration": "~15 min",
+      "steps": [
+        { "title": "Entra admin center → App registrations → New registration", "detail": "Pick supported account types (multitenant, optionally personal accounts) and add a Web redirect URI.", "owner": "you", "url": "https://entra.microsoft.com/", "evidence": { "status": "sourced", "sources": ["ms-establish"] } },
+        { "title": "Add Microsoft Graph delegated permissions", "detail": "Add the minimum set, e.g. User.Read, Mail.Read and offline_access (needed for refresh tokens). The agent can map your features to the smallest permission set.", "owner": "agent", "evidence": { "status": "sourced", "sources": ["unified-entra", "prismatic-graph"] } },
+        { "title": "Create a client secret (or certificate)", "detail": "The secret value is shown only once and has a maximum lifetime, so plan for rotation.", "owner": "you", "evidence": { "status": "sourced", "sources": ["unified-entra"] } }
+      ]
+    },
+    {
+      "name": "2 · Make consent work in other tenants",
+      "goal": "Customers' users can click 'Accept'",
+      "duration": "Minutes to weeks",
+      "steps": [
+        { "title": "Set a verified publisher domain", "detail": "Host /.well-known/microsoft-identity-association.json on your domain with your app ID. The agent can generate the file; you deploy it. *.onmicrosoft.com domains can't be publisher verified.", "owner": "agent", "evidence": { "status": "sourced", "sources": ["ms-publisher-domain", "ms-pv"] } },
+        { "title": "Join or confirm the Microsoft AI Cloud Partner Program", "detail": "You need a verified partner global account (PGA) Partner One ID, not a location ID. This is business paperwork only you can do.", "owner": "you", "evidence": { "status": "sourced", "sources": ["ms-pv", "nylas-ms"] } },
+        { "title": "Mark the app as publisher verified", "detail": "Go to Branding & properties → Add Partner One ID. Sign in with MFA, and use an email domain that matches the publisher domain. Microsoft says this takes minutes once the prerequisites are in place.", "owner": "you", "evidence": { "status": "sourced", "sources": ["ms-mark-pv", "ms-pv"] } },
+        { "title": "Test consent from a different tenant", "detail": "Use a free developer or test tenant that doesn't own the app.", "owner": "you", "evidence": { "status": "sourced", "sources": ["unified-entra"] } }
+      ]
+    }
+  ],
+  "requirements": [
+    { "item": "Verified Microsoft AI Cloud Partner Program account (PGA Partner One ID)", "requiredFor": "Publisher verification", "evidence": { "status": "sourced", "sources": ["ms-pv"] } },
+    { "item": "Publisher domain that isn't *.onmicrosoft.com", "requiredFor": "Publisher verification", "evidence": { "status": "sourced", "sources": ["ms-pv"] } },
+    { "item": "Admin consent", "requiredFor": "Application permissions, high-privilege delegated permissions, or tenants that require it", "evidence": { "status": "sourced", "sources": ["prismatic-graph", "ms-establish"] } }
+  ],
+  "blockers": [
+    { "symptom": "'Need admin approval' when a user tries to connect", "cause": "Risk-based step-up consent. Since November 2020, users can't consent to most newly registered multitenant apps that aren't publisher verified and request more than basic permissions. The tenant may also require admin consent for everything.", "fix": "Complete publisher verification, or have the customer's admin grant consent.", "evidence": { "status": "sourced", "sources": ["ms-pv", "ms-stepup"] } },
+    { "symptom": "Consent screen shows 'unverified'", "cause": "The multitenant app was registered after Nov 2020 and isn't publisher verified", "fix": "Publisher verification adds the blue verified badge.", "evidence": { "status": "sourced", "sources": ["ms-publisher-domain"] } },
+    { "symptom": "No refresh token returned", "cause": "offline_access wasn't requested", "fix": "Add offline_access to the requested scopes.", "evidence": { "status": "sourced", "sources": ["unified-entra"] } }
+  ],
+  "nuances": [
+    { "title": "Who can grant admin consent", "detail": "Per one integration platform, Graph application permissions need a Privileged Role Administrator. An Application Administrator isn't enough.", "evidence": { "status": "uncertain", "sources": ["unified-entra"] } },
+    { "title": "Publisher verification is free", "detail": "Microsoft charges nothing for publisher verification or its prerequisites.", "evidence": { "status": "sourced", "sources": ["ms-pv"] } }
+  ],
+  "sources": [
+    { "id": "ms-pv", "title": "Microsoft Learn — Publisher verification", "url": "https://learn.microsoft.com/en-us/entra/identity-platform/publisher-verification-overview", "kind": "official", "retrieved": "search-result" },
+    { "id": "ms-mark-pv", "title": "Microsoft Learn — Mark your app as publisher verified", "url": "https://learn.microsoft.com/en-us/entra/identity-platform/mark-app-as-publisher-verified", "kind": "official", "retrieved": "search-result" },
+    { "id": "ms-publisher-domain", "title": "Microsoft Learn — Configure an app's publisher domain", "url": "https://learn.microsoft.com/en-us/entra/identity-platform/howto-configure-publisher-domain", "kind": "official", "retrieved": "search-result" },
+    { "id": "ms-stepup", "title": "Microsoft Learn — Risk-based step-up consent", "url": "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-risk-based-step-up-consent", "kind": "official", "retrieved": "search-result" },
+    { "id": "ms-establish", "title": "Microsoft Learn — Establish applications in Entra ID", "url": "https://learn.microsoft.com/en-us/entra/architecture/establish-applications", "kind": "official", "retrieved": "search-result" },
+    { "id": "unified-entra", "title": "Unified.to — Microsoft Entra app registration skill", "url": "https://docs.unified.to/skills/microsoft-entra-app-registration/SKILL.md", "kind": "secondary", "retrieved": "search-result" },
+    { "id": "prismatic-graph", "title": "Prismatic — MS Graph API connector", "url": "https://prismatic.io/docs/components/ms-graph-api.md", "kind": "secondary", "retrieved": "search-result" },
+    { "id": "nylas-ms", "title": "Nylas — Microsoft publisher verification guide", "url": "https://developer.nylas.com/docs/provider-guides/microsoft/verification-guide/", "kind": "secondary", "retrieved": "search-result" }
+  ],
+  "verification": {
+    "checked": [
+      "Publisher verification requirements (PGA Partner One ID, no *.onmicrosoft.com, minutes once prerequisites are met, free) and the Nov 2020 step-up consent rule, against Microsoft Learn excerpts"
+    ],
+    "corrected": [
+      "Older guides say 'MPN ID'. Microsoft now calls it the Partner One ID for the Microsoft (AI) Cloud Partner Program."
+    ],
+    "unverified": [
+      "How long Partner Program enrollment and verification take for a brand-new company. Microsoft doesn't publish this.",
+      "Which roles can grant admin consent for Graph application permissions. This comes from a secondary source."
+    ]
+  },
+  "consoleUrl": "https://entra.microsoft.com/",
+  "docsUrl": "https://learn.microsoft.com/en-us/entra/identity-platform/publisher-verification-overview"
+}

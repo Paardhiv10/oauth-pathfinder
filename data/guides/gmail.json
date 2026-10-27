@@ -1,0 +1,131 @@
+{
+  "slug": "gmail",
+  "name": "Gmail (Google)",
+  "website": "https://mail.google.com",
+  "category": "Email",
+  "mode": "curated",
+  "updatedAt": "2026-10-27",
+  "summary": "You can connect your own Gmail in under an hour, but letting outside users connect means Google verification. If you need to read or modify mail, that also means a paid third-party security assessment (CASA) that repeats every year. Plan for weeks, not days, and pick scopes before you build.",
+  "verdict": {
+    "difficulty": 4,
+    "label": "Hard",
+    "timeToFirstConnection": "30–60 minutes (Testing mode, up to 100 test users)",
+    "timeToProduction": "Sensitive scopes only: ~1–3 weeks. Restricted scopes (read/modify mail): typically 4–8+ weeks",
+    "approvalWait": "Google says sensitive-scope review can take up to 10 days; restricted scopes can take several weeks plus the security assessment. Community reports of 5–8+ week stalls are common.",
+    "handsOnEffort": "1–2 days of prep (policy pages, domain verification, demo video, justifications); more if the assessment finds issues",
+    "confidence": "high"
+  },
+  "decideFirst": [
+    {
+      "question": "Are all your users inside one Google Workspace organization?",
+      "guidance": "If yes, set the user type to Internal. Internal apps skip verification, the 100-user cap, and the 7-day token expiry. Most agent products serve outside users, so they need External.",
+      "evidence": { "status": "sourced", "sources": ["g-audience", "unipile-token"] }
+    },
+    {
+      "question": "Which Gmail scopes do you actually need?",
+      "guidance": "This one choice sets your timeline. Sending only (gmail.send) is Sensitive: verification with a demo video, no security assessment. Reading, modifying, or drafting mail (gmail.readonly, gmail.modify, gmail.compose, mail.google.com) is Restricted: verification plus an annual CASA assessment. Labels-only is Non-sensitive.",
+      "evidence": { "status": "sourced", "sources": ["unified-gmail", "g-restricted"], "note": "One widely read third-party article classifies gmail.readonly as Sensitive. Google's restricted-scope materials and two other integration platforms list it as Restricted. We use Restricted." }
+    },
+    {
+      "question": "Do you need your own OAuth app at all?",
+      "guidance": "If you use a managed-auth platform (e.g. Composio), it may already provide a verified Google app. You still need your own if you want your brand on the consent screen, custom scopes, or your own quota.",
+      "evidence": { "status": "verified", "sources": ["composio-managed"] }
+    }
+  ],
+  "phases": [
+    {
+      "name": "1 · Get a working connection (Testing)",
+      "goal": "Connect your own and your team's accounts",
+      "duration": "30–60 min",
+      "steps": [
+        { "title": "Create a Google Cloud project and enable the Gmail API", "detail": "Use a dedicated project for this integration. The 100-user cap applies per project for its lifetime and cannot be reset.", "owner": "you", "url": "https://console.cloud.google.com/", "evidence": { "status": "sourced", "sources": ["g-audience", "skulid"] } },
+        { "title": "Configure branding and audience (Google Auth Platform)", "detail": "App name, support email, logo, homepage, privacy policy URL, authorized domains. Choose External and leave it in Testing for now. Add test users (max 100).", "owner": "you", "evidence": { "status": "sourced", "sources": ["g-audience"] } },
+        { "title": "Declare the minimum scopes", "detail": "Add only the scopes your code requests. If the scopes requested at runtime differ from the ones declared, users see the unverified-app screen.", "owner": "agent", "evidence": { "status": "sourced", "sources": ["sensitive-verif", "singh-timeline"] } },
+        { "title": "Create a Web OAuth client and register redirect URIs", "detail": "Copy the client ID and secret into your secret store. The agent can generate the callback handler and run a test sign-in against localhost.", "owner": "you", "evidence": { "status": "sourced", "sources": ["unipile-verif"] } },
+        { "title": "Run an end-to-end test", "detail": "An agent can write the token exchange and refresh code and test it. Expect the 'Google hasn't verified this app' warning in Testing; that is normal.", "owner": "agent", "evidence": { "status": "sourced", "sources": ["g-audience"] } }
+      ]
+    },
+    {
+      "name": "2 · Prepare for verification",
+      "goal": "Have a submission that passes on the first try",
+      "duration": "1–2 days of work",
+      "steps": [
+        { "title": "Verify domain ownership in Google Search Console", "detail": "Use an account that is Owner or Editor on the Cloud project. Every domain on the consent screen must be verified, including redirect URI domains.", "owner": "you", "evidence": { "status": "sourced", "sources": ["g-brand", "singh-brand"] } },
+        { "title": "Publish homepage and privacy policy on that domain", "detail": "The privacy policy must be on the same domain as the homepage, linked from the homepage, and disclose how you use Google user data, including the Limited Use disclosure. An agent can draft the Google-specific sections, but have a human or lawyer approve them.", "owner": "agent", "evidence": { "status": "verified", "sources": ["sensitive-verif", "g-brand"] } },
+        { "title": "Write a justification for each scope", "detail": "Explain the feature that needs the scope and why a narrower scope will not work. The agent can draft these from your feature list.", "owner": "agent", "evidence": { "status": "verified", "sources": ["sensitive-verif"] } },
+        { "title": "Record the demo video", "detail": "Show the consent screen with your app name, the OAuth client ID in the address bar, and every requested scope in use. The agent can write the shot list; you record it.", "owner": "you", "evidence": { "status": "sourced", "sources": ["singh-timeline", "g-consent-help"] } }
+      ]
+    },
+    {
+      "name": "3 · Submit and wait",
+      "goal": "Get Google's approval",
+      "duration": "Up to ~10 days (sensitive) · several weeks (restricted)",
+      "steps": [
+        { "title": "Publish the app ('In production') and submit in the Verification Center", "detail": "Track status there. Watch the developer-contact inbox for messages from Trust & Safety, and reply quickly. Every round trip adds days.", "owner": "you", "evidence": { "status": "sourced", "sources": ["sensitive-verif"] } },
+        { "title": "Google reviews brand + scope use", "detail": "Brand verification can happen as part of sensitive-scope verification.", "owner": "provider", "evidence": { "status": "verified", "sources": ["sensitive-verif"] } },
+        { "title": "Restricted scopes only: complete the CASA security assessment", "detail": "Google tells you when to start. You hire a Google-approved assessor (fees range from a few hundred to a few thousand USD), fix any findings, and get a Letter of Validation. This repeats every 12 months.", "owner": "you", "evidence": { "status": "sourced", "sources": ["g-restricted", "g-health-verif", "g-reassess"] } }
+      ]
+    }
+  ],
+  "requirements": [
+    { "item": "Verified domain (Search Console) for homepage, policy and redirect URIs", "requiredFor": "Production", "evidence": { "status": "sourced", "sources": ["g-brand", "singh-brand"] } },
+    { "item": "Privacy policy on the same domain as the homepage, with the Google user-data / Limited Use disclosure", "requiredFor": "Production", "evidence": { "status": "verified", "sources": ["sensitive-verif"] } },
+    { "item": "Per-scope justification + demo video", "requiredFor": "Sensitive & restricted scopes", "evidence": { "status": "verified", "sources": ["sensitive-verif"] } },
+    { "item": "Annual third-party CASA assessment (Letter of Validation)", "requiredFor": "Restricted scopes, if data passes through your servers", "evidence": { "status": "sourced", "sources": ["g-restricted", "g-reassess"] } },
+    { "item": "Consistent app name, logo and support email across app, site and submission", "requiredFor": "Brand verification", "evidence": { "status": "sourced", "sources": ["singh-brand"] } }
+  ],
+  "scopeTiers": [
+    { "tier": "Non-sensitive", "examples": "openid, email, profile, gmail.labels", "consequence": "Basic verification at most; no demo video", "evidence": { "status": "sourced", "sources": ["unified-gmail", "nylas-denied"] } },
+    { "tier": "Sensitive", "examples": "gmail.send", "consequence": "Verification with justification + demo video. No security assessment.", "evidence": { "status": "sourced", "sources": ["unified-gmail", "emailengine"] } },
+    { "tier": "Restricted", "examples": "mail.google.com, gmail.readonly, gmail.modify, gmail.compose, gmail.metadata, gmail.insert, gmail.settings.*", "consequence": "Verification + annual CASA security assessment", "evidence": { "status": "sourced", "sources": ["unified-gmail", "g-restricted"], "note": "Gmail has no narrow 'only these messages' scope comparable to Drive's drive.file." } }
+  ],
+  "blockers": [
+    { "symptom": "Tokens stop working exactly 7 days after users connect", "cause": "The app is External and still in Testing. Refresh tokens issued in Testing expire after 7 days.", "fix": "Publish to In production (you can do this before verification is done), or use Internal for single-org use.", "evidence": { "status": "sourced", "sources": ["g-audience", "unipile-token"] } },
+    { "symptom": "access_denied for a user", "cause": "In Testing, the user is not on the test-user list", "fix": "Add them as a test user (max 100) or publish and verify.", "evidence": { "status": "sourced", "sources": ["nylas-denied"] } },
+    { "symptom": "Stuck in 'Privacy policy review' for weeks with no email", "cause": "This is a common community report. The cause is often unclear.", "fix": "Check the developer-contact email and spam folder. Confirm the policy is public with no login, on the verified domain, and includes the Limited Use disclosure. Post on the Google developer forum with your project number.", "evidence": { "status": "uncertain", "sources": ["forum-stuck1", "forum-stuck2"], "note": "Based on community reports only" } },
+    { "symptom": "Users suddenly have to reconnect", "cause": "Refresh tokens with Gmail scopes are revoked when the user changes their password", "fix": "Detect invalid_grant and send the user back through the connect flow.", "evidence": { "status": "sourced", "sources": ["unified-gmail"] } },
+    { "symptom": "Workspace users get 'blocked by admin'", "cause": "The Workspace admin restricts unverified third-party apps or high-risk scopes", "fix": "Ask the admin to allowlist your client ID, or finish verification.", "evidence": { "status": "sourced", "sources": ["g-audience", "skulid"] } }
+  ],
+  "nuances": [
+    { "title": "The 100-user cap counts for the project's whole lifetime", "detail": "Creating a new OAuth client in the same project does not reset it.", "evidence": { "status": "sourced", "sources": ["g-audience"] } },
+    { "title": "Adding a restricted scope later means another review", "detail": "Your timeline resets for that scope, and the assessment may need to be expanded.", "evidence": { "status": "sourced", "sources": ["g-restricted"] } },
+    { "title": "Official timelines and real experience differ", "detail": "Google's sensitive-scope page says up to 10 days. Forum threads from 2026 describe 5–8 week stalls. Use 2–4 weeks for planning.", "evidence": { "status": "uncertain", "sources": ["sensitive-verif", "forum-stuck1"] } }
+  ],
+  "sources": [
+    { "id": "composio-managed", "title": "Composio — Managed OAuth apps", "url": "https://docs.composio.dev/toolkits/managed-auth", "kind": "official", "retrieved": "fetched" },
+    { "id": "sensitive-verif", "title": "Google — Sensitive scope verification", "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification", "kind": "official", "retrieved": "search-result" },
+    { "id": "g-restricted", "title": "Google — Restricted scope verification", "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification", "kind": "official", "retrieved": "search-result" },
+    { "id": "g-audience", "title": "Google Cloud Help — Manage app audience", "url": "https://support.google.com/cloud/answer/15549945", "kind": "official", "retrieved": "search-result" },
+    { "id": "g-brand", "title": "Google Cloud Help — Brand verification requirements", "url": "https://support.google.com/cloud/answer/13464321", "kind": "official", "retrieved": "search-result" },
+    { "id": "g-consent-help", "title": "Google Cloud Help — Submitting for verification", "url": "https://support.google.com/cloud/answer/13461325", "kind": "official", "retrieved": "search-result" },
+    { "id": "g-reassess", "title": "Google Cloud Help — Annual reassessment", "url": "https://support.google.com/cloud/answer/13463816", "kind": "official", "retrieved": "search-result" },
+    { "id": "g-health-verif", "title": "Google Health API — App verification (CASA durations & fees)", "url": "https://developers.google.com/health/app-verification", "kind": "official", "retrieved": "search-result" },
+    { "id": "unified-gmail", "title": "Unified.to — Gmail OAuth app skill", "url": "https://docs.unified.to/skills/gmail-oauth-app/SKILL.md", "kind": "secondary", "retrieved": "search-result" },
+    { "id": "emailengine", "title": "EmailEngine — Gmail API scopes", "url": "https://learn.emailengine.app/docs/accounts/gmail/gmail-api-scopes", "kind": "secondary", "retrieved": "search-result" },
+    { "id": "unipile-token", "title": "Unipile — Google refresh token 7-day limit", "url": "https://www.unipile.com/google-oauth-refresh-token/", "kind": "secondary", "retrieved": "search-result" },
+    { "id": "unipile-verif", "title": "Unipile — Google OAuth verification & Gmail credentials", "url": "https://www.unipile.com/integrating-google-oauth-2-0-user-authentication-into-your-app/", "kind": "secondary", "retrieved": "search-result" },
+    { "id": "nylas-denied", "title": "Nylas — Fix Google access_denied", "url": "https://developer.nylas.com/docs/cookbook/use-cases/build/fix-google-access-denied/", "kind": "secondary", "retrieved": "search-result" },
+    { "id": "skulid", "title": "skulid wiki — Getting started (Google project setup)", "url": "https://github.com/ryakel/skulid/wiki/Getting-Started", "kind": "community", "retrieved": "search-result" },
+    { "id": "singh-timeline", "title": "Google OAuth verification timeline (2026)", "url": "https://singhamandeep.com/?p=1402", "kind": "secondary", "retrieved": "search-result" },
+    { "id": "singh-brand", "title": "Google OAuth brand verification guide", "url": "https://singhamandeep.com/?p=971", "kind": "secondary", "retrieved": "search-result" },
+    { "id": "forum-stuck1", "title": "Google Dev Forum — Verification stuck 5+ weeks", "url": "https://discuss.google.dev/t/oauth-sensitive-scope-verification-stuck-on-privacy-policy-review-for-5-weeks-no-trust-safety-email-received/374799", "kind": "community", "retrieved": "search-result" },
+    { "id": "forum-stuck2", "title": "Google Dev Forum — Under review 8+ weeks", "url": "https://discuss.google.dev/t/oauth-data-access-verification-stuck-under-review-for-8-weeks-sensitive-scope-only-spreadsheets-no-trust-safety-contact/375352", "kind": "community", "retrieved": "search-result" }
+  ],
+  "verification": {
+    "checked": [
+      "Sensitive-scope requirements (narrowest scope, policy on same domain, justification + demo video, up to 10 days) against Google's official page",
+      "100-user lifetime cap and 7-day Testing token expiry against Google Cloud Help",
+      "Annual CASA requirement and Letter of Validation against Google's restricted-scope and reassessment pages"
+    ],
+    "corrected": [
+      "A third-party guide (Unipile) lists gmail.readonly as Sensitive. Google's restricted-scope materials and two other integration platforms list it as Restricted, so we classify it as Restricted.",
+      "Assessment cost and duration ($500–$4,500; 2–3 weeks for tier 2) come from Google's Health API verification page, not the Gmail page. We show them as an indication only."
+    ],
+    "unverified": [
+      "We did not run the verification submission ourselves; it needs a real domain, a live product and a Google account.",
+      "Real-world review times come from forum reports, not controlled data."
+    ]
+  },
+  "consoleUrl": "https://console.cloud.google.com/auth/overview",
+  "docsUrl": "https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification"
+}

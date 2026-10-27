@@ -1,0 +1,98 @@
+{
+  "slug": "github",
+  "name": "GitHub",
+  "website": "https://github.com",
+  "category": "Developer tools",
+  "mode": "curated",
+  "updatedAt": "2026-10-27",
+  "summary": "GitHub doesn't review OAuth apps. You can register one and have any user connect within 15 minutes. The real decisions are OAuth App vs GitHub App, and planning for organizations that must approve your app before it can see their private repos.",
+  "verdict": {
+    "difficulty": 1,
+    "label": "Instant",
+    "timeToFirstConnection": "~10–15 minutes",
+    "timeToProduction": "Same day. No provider review.",
+    "approvalWait": "None from GitHub. Each organization that restricts OAuth apps must approve yours.",
+    "handsOnEffort": "Under an hour, including the callback code",
+    "confidence": "high"
+  },
+  "decideFirst": [
+    {
+      "question": "OAuth App or GitHub App?",
+      "guidance": "GitHub recommends GitHub Apps. They use fine-grained permissions, let users pick which repos the app can access, and use short-lived tokens. They can also act without a user. OAuth Apps act only as the user, use broad scopes, and are simpler. For an agent that touches user repos, prefer a GitHub App.",
+      "evidence": { "status": "verified", "sources": ["gh-create-oauth"] }
+    },
+    {
+      "question": "Personal account or organization owner?",
+      "guidance": "Register the app under an organization you administer so users see your company, not a person, and so the app survives staff changes. A user or org can own up to 100 OAuth apps.",
+      "evidence": { "status": "verified", "sources": ["gh-create-oauth"] }
+    }
+  ],
+  "phases": [
+    {
+      "name": "1 · Register the app",
+      "goal": "Get a client ID and secret",
+      "duration": "~10 min",
+      "steps": [
+        { "title": "Open Developer settings", "detail": "Go to Profile → Settings → Developer settings → OAuth apps → New OAuth App. For an org, use the org's Settings → Developer settings.", "owner": "you", "url": "https://github.com/settings/developers", "evidence": { "status": "verified", "sources": ["gh-create-oauth"] } },
+        { "title": "Fill in name, homepage URL, description, and callback URL", "detail": "Only use public information. Don't put internal URLs here. An OAuth App gets exactly one callback URL; a GitHub App can have several.", "owner": "you", "evidence": { "status": "verified", "sources": ["gh-create-oauth"], "note": "Some translated pages in GitHub's docs state the opposite. The English page is authoritative." } },
+        { "title": "Enable Device Flow if your agent runs in a CLI or headless context", "detail": "Optional checkbox at registration.", "owner": "you", "evidence": { "status": "verified", "sources": ["gh-create-oauth"] } },
+        { "title": "Generate a client secret and store it", "detail": "Store it in your secret manager and never commit it.", "owner": "you", "evidence": { "status": "sourced", "sources": ["gh-create-oauth"] } }
+      ]
+    },
+    {
+      "name": "2 · Build and test the flow",
+      "goal": "A user can connect and you get a token",
+      "duration": "30–45 min",
+      "steps": [
+        { "title": "Implement authorize → callback → token exchange", "detail": "Send users to /login/oauth/authorize with a random state value, then exchange the code at /login/oauth/access_token. Codes expire after 10 minutes. The agent can write and test this code.", "owner": "agent", "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps", "evidence": { "status": "sourced", "sources": ["gh-authorize"] } },
+        { "title": "Test with a second GitHub account", "detail": "Make sure scopes and the consent page look right to a user who isn't you.", "owner": "you", "evidence": { "status": "uncertain", "note": "Recommended practice, not a documented requirement" } }
+      ]
+    },
+    {
+      "name": "3 · Roll out to organizations",
+      "goal": "Your app can see org resources",
+      "duration": "Depends on each org's owner",
+      "steps": [
+        { "title": "Expect org owner approval", "detail": "New organizations have OAuth app access restrictions on by default. Members must ask an org owner to approve your app. Until then the app sees only public org resources. Tell users this in your UI.", "owner": "provider", "evidence": { "status": "verified", "sources": ["gh-restrictions", "gh-authorizing-user"] } }
+      ]
+    }
+  ],
+  "requirements": [
+    { "item": "Homepage URL and one callback URL", "requiredFor": "Always", "evidence": { "status": "verified", "sources": ["gh-create-oauth"] } },
+    { "item": "Users must have a verified email address", "requiredFor": "Users authorizing your app", "evidence": { "status": "verified", "sources": ["gh-authorizing-user"] } },
+    { "item": "No provider review", "requiredFor": "—", "note": "A GitHub Marketplace listing is separate and optional. Not covered here.", "evidence": { "status": "sourced", "sources": ["gh-create-oauth"] } }
+  ],
+  "blockers": [
+    { "symptom": "redirect_uri mismatch error", "cause": "The redirect_uri's host and port must exactly match the callback URL, and its path must be the same as or below the callback path", "fix": "Use the registered callback, or a subpath of it. For loopback callbacks such as http://127.0.0.1/path, the port can differ.", "evidence": { "status": "sourced", "sources": ["gh-authorize"], "note": "Confirmed in several versions of GitHub's docs" } },
+    { "symptom": "Connected user can't see org private repos", "cause": "The org has OAuth app access restrictions and hasn't approved your app", "fix": "The user requests approval and an org owner grants it under Org Settings → Third-party access → OAuth app policy.", "evidence": { "status": "verified", "sources": ["gh-restrictions", "gh-approve"] } },
+    { "symptom": "Older tokens stop working", "cause": "GitHub keeps at most 10 tokens per user/app/scope combination and revokes the oldest", "fix": "Reuse stored tokens instead of re-running the flow each session.", "evidence": { "status": "sourced", "sources": ["gh-authorize"] } }
+  ],
+  "nuances": [
+    { "title": "Token lifetimes differ by app type", "detail": "OAuth App tokens don't expire by default. GitHub App user tokens expire after 8 hours, with refresh tokens that last 6 months. This is on by default for new GitHub Apps. Your agent must handle refresh.", "evidence": { "status": "verified", "sources": ["gh-refresh"] } },
+    { "title": "Using a refresh token invalidates the old pair", "detail": "Each refresh returns a new access and refresh token. Store them together, and handle concurrent refreshes carefully.", "evidence": { "status": "verified", "sources": ["gh-refresh"] } }
+  ],
+  "sources": [
+    { "id": "gh-create-oauth", "title": "GitHub Docs — Creating an OAuth app", "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app", "kind": "official", "retrieved": "search-result" },
+    { "id": "gh-authorize", "title": "GitHub Docs — Authorizing OAuth apps", "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps", "kind": "official", "retrieved": "search-result" },
+    { "id": "gh-restrictions", "title": "GitHub Docs — About OAuth app access restrictions", "url": "https://docs.github.com/en/organizations/managing-oauth-access-to-your-organizations-data/about-oauth-app-access-restrictions", "kind": "official", "retrieved": "search-result" },
+    { "id": "gh-approve", "title": "GitHub Docs — Approving OAuth apps for your organization", "url": "https://docs.github.com/en/organizations/managing-oauth-access-to-your-organizations-data/approving-oauth-apps-for-your-organization", "kind": "official", "retrieved": "search-result" },
+    { "id": "gh-authorizing-user", "title": "GitHub Docs — Authorizing OAuth apps (user view)", "url": "https://docs.github.com/en/apps/oauth-apps/using-oauth-apps/authorizing-oauth-apps", "kind": "official", "retrieved": "search-result" },
+    { "id": "gh-refresh", "title": "GitHub Docs — Refreshing user access tokens", "url": "https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/refreshing-user-access-tokens", "kind": "official", "retrieved": "search-result" }
+  ],
+  "verification": {
+    "checked": [
+      "Registration fields, single callback URL, 100-app limit and Device Flow against GitHub's 'Creating an OAuth app' page (English)",
+      "Default-on org access restrictions and the approval path against GitHub org docs",
+      "8-hour / 6-month GitHub App token lifetimes against GitHub's refresh-token docs"
+    ],
+    "corrected": [
+      "Some Japanese-language versions of the 'Creating an OAuth app' page say the reverse about which app type supports multiple callback URLs. The current English page says OAuth Apps get one and GitHub Apps can have several. We follow the English page."
+    ],
+    "unverified": [
+      "The redirect-URI matching rules come from Enterprise Server versions of the docs seen in search results. They are consistent across versions but were not re-read on the current github.com page.",
+      "We did not register a live app in this run. That needs a signed-in GitHub account."
+    ]
+  },
+  "consoleUrl": "https://github.com/settings/developers",
+  "docsUrl": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app"
+}

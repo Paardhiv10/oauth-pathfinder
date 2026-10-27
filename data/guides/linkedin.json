@@ -1,0 +1,99 @@
+{
+  "slug": "linkedin",
+  "name": "LinkedIn",
+  "website": "https://www.linkedin.com",
+  "category": "Social",
+  "mode": "curated",
+  "updatedAt": "2026-10-27",
+  "summary": "Sign-in and posting to your own profile are self-serve. Anything an agent typically wants, such as managing company pages, comments, or analytics, sits behind LinkedIn's business vetting. That requires a registered legal entity, a Company Page verified by its super admin, and a two-tier review with a screencast. If you're rejected you have to start over with a new app. Confirm your use case is allowed before you build.",
+  "verdict": {
+    "difficulty": 5,
+    "label": "Gated",
+    "timeToFirstConnection": "~15 minutes for Sign In with LinkedIn / Share on LinkedIn",
+    "timeToProduction": "Weeks to months for Community Management API. LinkedIn publishes no timeline, and approval is at its discretion.",
+    "approvalWait": "Two reviews (Development tier, then Standard tier). Third-party estimates range from 4 weeks to several months.",
+    "handsOnEffort": "2–4 days: entity verification, page verification, full integration, screencast",
+    "confidence": "medium"
+  },
+  "decideFirst": [
+    {
+      "question": "Do you only need sign-in or posting to the member's own profile?",
+      "guidance": "If so, request Sign In with LinkedIn using OpenID Connect and Share on LinkedIn. Both are self-serve. Stop here and skip the rest of this guide.",
+      "evidence": { "status": "sourced", "sources": ["bundle-perms", "phyllo"] }
+    },
+    {
+      "question": "Is your use case allowed, and are you a registered legal organization?",
+      "guidance": "The Community Management API is only for registered legal organizations with commercial use cases, and you must check the restricted-use-case list. Personal email addresses fail vetting.",
+      "evidence": { "status": "verified", "sources": ["li-cm-review"] }
+    }
+  ],
+  "phases": [
+    {
+      "name": "1 · Create the app and verify your Page",
+      "goal": "App linked to a real, verified Company Page",
+      "duration": "~30 min + waiting for the Page admin",
+      "steps": [
+        { "title": "Create a developer app linked to your company's LinkedIn Page", "detail": "Don't use a placeholder or test Page. The app name and logo can't include LinkedIn or Microsoft names or logos.", "owner": "you", "url": "https://www.linkedin.com/developers/apps", "evidence": { "status": "verified", "sources": ["li-cm-review", "li-conversions"] } },
+        { "title": "Have a Page super admin verify the app", "detail": "Generate the verification link in app settings. A super admin of that Page must approve it.", "owner": "you", "evidence": { "status": "verified", "sources": ["li-cm-review"] } },
+        { "title": "Add self-serve products", "detail": "Sign In with LinkedIn using OpenID Connect and Share on LinkedIn are granted without review.", "owner": "you", "evidence": { "status": "sourced", "sources": ["bundle-perms"] } }
+      ]
+    },
+    {
+      "name": "2 · Development tier review",
+      "goal": "Limited access to build and test",
+      "duration": "Not published",
+      "steps": [
+        { "title": "Request access to Community Management API under Products", "detail": "If the app already has other provisioned or pending products, such as the Ads API, the request option is grayed out. Use a fresh app.", "owner": "you", "evidence": { "status": "sourced", "sources": ["li-support"] } },
+        { "title": "Complete the access form", "detail": "You'll need a business email (verified), legal name, registered address, website and privacy policy, and they must all match. The agent can pre-fill the form and check for mismatches.", "owner": "agent", "evidence": { "status": "verified", "sources": ["li-cm-review"] } },
+        { "title": "LinkedIn vets your use case, organization, domain and Page verification", "detail": "If rejected, you can't re-apply with the same app.", "owner": "provider", "evidence": { "status": "verified", "sources": ["li-cm-review"] } }
+      ]
+    },
+    {
+      "name": "3 · Standard tier review",
+      "goal": "Production limits",
+      "duration": "Not published",
+      "steps": [
+        { "title": "Fully integrate the APIs first", "detail": "Changing functionality after review may trigger another review.", "owner": "agent", "evidence": { "status": "verified", "sources": ["li-cm-review"] } },
+        { "title": "Record a screencast for each use case", "detail": "High resolution and downloadable, with only your app on screen; narration is recommended. Show the full OAuth flow and each personal-data field you display. The agent can write the script.", "owner": "you", "evidence": { "status": "verified", "sources": ["li-cm-review"] } },
+        { "title": "Submit the Standard tier form with test credentials", "detail": "Reviewers check use case, privacy policy, data storage requirements and the screencast.", "owner": "provider", "evidence": { "status": "verified", "sources": ["li-cm-review"] } }
+      ]
+    }
+  ],
+  "requirements": [
+    { "item": "Registered legal organization + commercial use case", "requiredFor": "Community Management API", "evidence": { "status": "verified", "sources": ["li-cm-review"] } },
+    { "item": "Verified business email (no personal email)", "requiredFor": "Community Management API", "evidence": { "status": "verified", "sources": ["li-cm-review"] } },
+    { "item": "App verified by a super admin of your Company Page", "requiredFor": "Community Management, Conversions and other gated products", "evidence": { "status": "verified", "sources": ["li-cm-review", "li-conversions"] } },
+    { "item": "Screencast + test credentials", "requiredFor": "Standard tier", "evidence": { "status": "verified", "sources": ["li-cm-review"] } }
+  ],
+  "blockers": [
+    { "symptom": "'Request access' is grayed out", "cause": "The app already has other products provisioned or pending", "fix": "Create a new app just for the Community Management request.", "evidence": { "status": "sourced", "sources": ["li-support"] } },
+    { "symptom": "Rejected", "cause": "Unsupported use case, mismatched business details, personal email, or an unverified Page", "fix": "Fix the qualification gap, then create a new app and submit again. The old app can't re-apply.", "evidence": { "status": "verified", "sources": ["li-cm-review"] } },
+    { "symptom": "Marketing Developer Platform isn't available", "cause": "Several sources say LinkedIn no longer grants MDP to new apps", "fix": "Request the specific product instead, e.g. Community Management API or Advertising API.", "evidence": { "status": "uncertain", "sources": ["serval-li"] } }
+  ],
+  "nuances": [
+    { "title": "API versions are retired regularly", "detail": "The official review page warns that a marketing API version is being retired on Nov 16, 2026. Pin a version and plan to upgrade.", "evidence": { "status": "verified", "sources": ["li-cm-review"] } },
+    { "title": "Approval can be withdrawn later", "detail": "LinkedIn may suspend access for non-compliance even after approval.", "evidence": { "status": "verified", "sources": ["li-cm-review"] } }
+  ],
+  "sources": [
+    { "id": "li-cm-review", "title": "LinkedIn (Microsoft Learn) — Community Management App Review", "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management-app-review", "kind": "official", "retrieved": "fetched" },
+    { "id": "li-conversions", "title": "LinkedIn — Getting access to Conversions API", "url": "https://learn.microsoft.com/en-us/linkedin/marketing/conversions/getting-access-conversions", "kind": "official", "retrieved": "search-result" },
+    { "id": "li-support", "title": "LinkedIn — API partner support guide", "url": "https://learn.microsoft.com/en-us/linkedin/shared/linkedin-api-partner-support-guide", "kind": "official", "retrieved": "search-result" },
+    { "id": "bundle-perms", "title": "bundle.social — LinkedIn API permissions (Aug 2026)", "url": "https://bundle.social/blog/linkedin-api-permissions", "kind": "secondary", "retrieved": "search-result" },
+    { "id": "phyllo", "title": "Phyllo — LinkedIn API access in 2026", "url": "https://www.getphyllo.com/post/linkedin-api-access-in-2026-partner-program-approval-timeline-alternatives", "kind": "secondary", "retrieved": "search-result" },
+    { "id": "serval-li", "title": "Serval — LinkedIn integration docs", "url": "https://docs.serval.com/sections/integrations/linkedin", "kind": "secondary", "retrieved": "search-result" }
+  ],
+  "verification": {
+    "checked": [
+      "Every Development and Standard tier requirement, the rejection and re-apply rule, and the screencast requirements, by reading LinkedIn's current (2026-10) Community Management App Review page"
+    ],
+    "corrected": [
+      "Many guides still say to request the 'Marketing Developer Platform'. The current path is product-specific (Community Management API), and secondary sources report MDP is closed to new apps."
+    ],
+    "unverified": [
+      "Review durations. LinkedIn publishes none; the estimates of 4 weeks to 4 months come from a third party.",
+      "That MDP is closed to new apps. This is reported by secondary sources only."
+    ]
+  },
+  "consoleUrl": "https://www.linkedin.com/developers/apps",
+  "docsUrl": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management-app-review"
+}

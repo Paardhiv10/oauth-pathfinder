@@ -1,0 +1,95 @@
+{
+  "slug": "notion",
+  "name": "Notion",
+  "website": "https://www.notion.so",
+  "category": "Productivity",
+  "mode": "curated",
+  "updatedAt": "2026-10-27",
+  "summary": "Mostly self-serve. Create a public connection in Notion's developer portal and you get OAuth credentials. Two things catch people out. The installation scope can't be changed after creation. And each user picks which pages your agent can see, so the agent sees nothing until the user shares pages with it.",
+  "verdict": {
+    "difficulty": 2,
+    "label": "Easy",
+    "timeToFirstConnection": "~20–30 minutes",
+    "timeToProduction": "Same day to a few days (see the uncertainty about review)",
+    "approvalWait": "Unclear. Notion's docs say the Authorization URL appears 'after a public connection is submitted for review', but they don't describe a review process or timeline. Marketplace listing is separate.",
+    "handsOnEffort": "1–2 hours",
+    "confidence": "medium"
+  },
+  "decideFirst": [
+    {
+      "question": "Do outside users need to connect, or just your own workspace?",
+      "guidance": "For your own team only, an internal connection (static token) or a personal access token is simpler and needs no OAuth. A public connection (OAuth) is for when other Notion users install your app.",
+      "evidence": { "status": "verified", "sources": ["notion-auth"] }
+    },
+    {
+      "question": "Installation scope: any workspace, or selected workspaces only?",
+      "guidance": "You choose this when you create the connection and can't change it later. If you want customers to connect, pick 'Any workspace'.",
+      "evidence": { "status": "verified", "sources": ["notion-auth"] }
+    }
+  ],
+  "phases": [
+    {
+      "name": "1 · Create a public connection",
+      "goal": "Get OAuth client ID, secret and authorization URL",
+      "duration": "~15 min",
+      "steps": [
+        { "title": "Open the Developer portal and create a public connection", "detail": "The portal is at app.notion.com/developers/connections. Notion renamed 'integrations' to 'connections', so older guides use the old name.", "owner": "you", "url": "https://app.notion.com/developers/connections", "evidence": { "status": "verified", "sources": ["notion-auth"] } },
+        { "title": "Fill in redirect URI(s) and installation scope", "detail": "Third-party guides also list tagline, website, privacy policy, terms of use and support email as required for public connections. The agent can draft the policy pages.", "owner": "you", "evidence": { "status": "sourced", "sources": ["notion-auth", "make-notion", "sakal-notion"] } },
+        { "title": "Copy secrets from the Configuration tab", "detail": "The client ID, secret and authorization URL are on the Configuration tab. Treat the secret like a password.", "owner": "you", "evidence": { "status": "verified", "sources": ["notion-auth"] } }
+      ]
+    },
+    {
+      "name": "2 · Build the flow",
+      "goal": "Exchange code for tokens and handle refresh",
+      "duration": "45–60 min",
+      "steps": [
+        { "title": "Send users to the authorization URL (owner=user)", "detail": "Users pick pages with a page picker. They can only share pages they have full access to.", "owner": "agent", "evidence": { "status": "verified", "sources": ["notion-auth"] } },
+        { "title": "POST to /v1/oauth/token with HTTP Basic auth", "detail": "Send redirect_uri if you used it in the authorize URL or registered more than one. Store access_token, refresh_token, bot_id and workspace_id together.", "owner": "agent", "evidence": { "status": "verified", "sources": ["notion-auth"] } },
+        { "title": "Implement refresh", "detail": "A refresh returns a new access token and a new refresh token. Store both.", "owner": "agent", "evidence": { "status": "verified", "sources": ["notion-auth"] } }
+      ]
+    },
+    {
+      "name": "3 · (Optional) Marketplace listing",
+      "goal": "Discoverability in Notion's Marketplace",
+      "duration": "Unknown",
+      "steps": [
+        { "title": "Manage listing details in the Listings section", "detail": "Notion manages listing details separately from OAuth configuration.", "owner": "you", "evidence": { "status": "verified", "sources": ["notion-auth"] } }
+      ]
+    }
+  ],
+  "requirements": [
+    { "item": "Redirect URI(s)", "requiredFor": "Always", "evidence": { "status": "verified", "sources": ["notion-auth"] } },
+    { "item": "Privacy policy, terms of use, support email, website", "requiredFor": "Public connection", "evidence": { "status": "sourced", "sources": ["make-notion", "sakal-notion"], "note": "Listed by third parties; not re-checked against the current portal form" } },
+    { "item": "Workspace owner role", "requiredFor": "Creating internal connections", "note": "We could not confirm whether the same applies to public connections", "evidence": { "status": "verified", "sources": ["notion-auth"] } }
+  ],
+  "blockers": [
+    { "symptom": "Agent can't see a page the user expects it to see", "cause": "Access is per page. The user didn't select that page in the picker, or doesn't have full access to it.", "fix": "Send the user back through the picker, or provide a template that is shared with the connection automatically.", "evidence": { "status": "verified", "sources": ["notion-auth"] } },
+    { "symptom": "A teammate of a connected user can't use the integration", "cause": "Public connections are authorized per user, not per workspace", "fix": "Each user connects on their own. Design onboarding with this in mind.", "evidence": { "status": "verified", "sources": ["notion-auth"] } },
+    { "symptom": "Wrong installation scope, and you can't change it", "cause": "It's fixed when the connection is created", "fix": "Create a new connection. This means a new client ID, and existing users must reconnect.", "evidence": { "status": "verified", "sources": ["notion-auth"] } }
+  ],
+  "nuances": [
+    { "title": "Notion now issues refresh tokens", "detail": "Many guides, including at least one integration platform's docs, say Notion tokens never expire and there's no refresh token. The current official docs return a refresh_token and document a refresh endpoint. Build refresh handling.", "evidence": { "status": "verified", "sources": ["notion-auth", "nango-notion"] } },
+    { "title": "Templates can make onboarding easier", "detail": "If you set a public template URL, users can duplicate it during OAuth, and the new page is shared with your connection automatically.", "evidence": { "status": "verified", "sources": ["notion-auth"] } }
+  ],
+  "sources": [
+    { "id": "notion-auth", "title": "Notion Developers — Authorization", "url": "https://developers.notion.com/docs/authorization", "kind": "official", "retrieved": "fetched" },
+    { "id": "nango-notion", "title": "Nango — Notion integration notes", "url": "https://www.nango.dev/docs/integrations/all/notion-scim.md", "kind": "secondary", "retrieved": "search-result" },
+    { "id": "make-notion", "title": "Make — Notion connection setup", "url": "https://apps.make.com/notion.md", "kind": "secondary", "retrieved": "search-result" },
+    { "id": "sakal-notion", "title": "How to create a public Notion integration", "url": "https://norahsakal.com/blog/create-public-notion-integration/", "kind": "community", "retrieved": "search-result" }
+  ],
+  "verification": {
+    "checked": [
+      "The full authorization flow, token response fields, refresh flow, fixed installation scope, and per-user authorization, by reading Notion's official authorization page"
+    ],
+    "corrected": [
+      "Nango's Notion page says there are no refresh tokens and tokens never expire. Notion's current docs return a refresh_token and document refreshing. We follow the official docs.",
+      "Notion renamed 'integrations' to 'connections' and moved the portal to app.notion.com/developers/connections. Older guides use the old names."
+    ],
+    "unverified": [
+      "Whether public connections get a manual review before the Authorization URL appears, and how long that takes. The docs mention 'submitted for review' but give no details.",
+      "The exact required fields on the current public-connection form."
+    ]
+  },
+  "consoleUrl": "https://app.notion.com/developers/connections",
+  "docsUrl": "https://developers.notion.com/docs/authorization"
+}
