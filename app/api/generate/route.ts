@@ -48,7 +48,13 @@ export async function POST(req: Request) {
           cache.set(key, { at: Date.now(), guide });
         }
       } catch (e: any) {
-        send({ type: "error", message: e?.message || "Generation failed" });
+        const msg: string = e?.message || "Generation failed";
+        send({
+          type: "error",
+          message: /fetch failed|ECONNREFUSED|ENOTFOUND/i.test(msg)
+            ? "The server couldn't reach the Claude API. Check the network and ANTHROPIC_API_KEY, then try again."
+            : msg,
+        });
       } finally {
         clearInterval(keepAlive);
         controller.close();

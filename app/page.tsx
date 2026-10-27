@@ -1,51 +1,70 @@
 import Link from "next/link";
 import { LIBRARY } from "@/lib/guides";
 import { AppSearch } from "@/components/AppSearch";
+import { Meter } from "@/components/Meter";
 
 export default function Home() {
   const sorted = [...LIBRARY].sort((a, b) => a.verdict.difficulty - b.verdict.difficulty);
   return (
-    <>
-      <section className="hero">
-        <h1>Will your OAuth app take an hour or a month?</h1>
-        <p className="lede">
-          Look up an app to see what it takes before your users can click “Connect”. You'll get the steps, the reviews, the
-          waits, and which parts an agent can do for you. If an app isn't here, an agent researches it and writes the guide live.
+    <div className="home">
+      <section className="hero glow-panel">
+        <span className="eyebrow">OAuth setup &amp; approval guides</span>
+        <h1>Will your OAuth app take an hour or <span className="hl">a month?</span></h1>
+        <p className="hero-sub">
+          See what it takes before your users can click “Connect”: the steps, the reviews, the waits, and which parts an
+          agent can do for you. If an app isn't in the library, an agent researches it live.
         </p>
         <AppSearch names={LIBRARY.map((g) => ({ slug: g.slug, name: g.name, website: g.website }))} />
+        <div className="hero-stats">
+          <span className="hero-stat">{LIBRARY.length} curated guides</span>
+          <span className="hero-stat">Any other app in 1–3 minutes</span>
+          <span className="hero-stat">Every claim tagged with its evidence</span>
+        </div>
       </section>
 
-      <section id="library" className="library">
-        <h2>Curated guides</h2>
-        <p className="muted">Sorted from instant to gated. Each claim is tagged with how it was checked.</p>
-        <table className="tbl lib-table">
-          <thead>
-            <tr><th>App</th><th>Difficulty</th><th>Your own account</th><th>Any user can connect</th><th>Main hurdle</th></tr>
-          </thead>
-          <tbody>
-            {sorted.map((g) => (
-              <tr key={g.slug}>
-                <td><Link href={`/apps/${g.slug}`} className="lib-name">{g.name}</Link><div className="muted small">{g.category}</div></td>
-                <td>
-                  <span className={`chip d${g.verdict.difficulty}`}>{g.verdict.label}</span>
-                </td>
-                <td>{g.verdict.timeToFirstConnection}</td>
-                <td>{g.verdict.timeToProduction}</td>
-                <td className="small">{g.decideFirst[0]?.question}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <section id="library" className="section">
+        <div className="section-head">
+          <h2>Library</h2>
+          <p className="muted">Ordered from instant to gated.</p>
+        </div>
+        <ul className="cards">
+          {sorted.map((g) => (
+            <li key={g.slug}>
+              <Link href={`/apps/${g.slug}`} className="card">
+                <div className="card-top">
+                  <div>
+                    <h3>{g.name}</h3>
+                    <span className="muted small">{g.category}</span>
+                  </div>
+                  <Meter d={g.verdict.difficulty} label={g.verdict.label} />
+                </div>
+                <dl className="card-times">
+                  <div><dt>Your own account</dt><dd>{g.verdict.timeToFirstConnection}</dd></div>
+                  <div><dt>Any user can connect</dt><dd>{g.verdict.timeToProduction}</dd></div>
+                </dl>
+              </Link>
+            </li>
+          ))}
+          <li>
+            <Link href="/generate" className="card card-new">
+              <span className="plus" aria-hidden>+</span>
+              <h3>Another app?</h3>
+              <span className="muted small">Generate a guide for any app in 1–3 minutes</span>
+            </Link>
+          </li>
+        </ul>
       </section>
 
-      <section className="how">
-        <h2>How a guide is made</h2>
-        <ol className="how-steps">
-          <li><h3>Research</h3><p>An agent searches and reads the provider's official docs, then a couple of real-world reports about review times and errors.</p></li>
-          <li><h3>Write</h3><p>It writes a route from your first connection to production. Each step says whether an agent can do it, you must, or you're waiting on the provider.</p></li>
-          <li><h3>Check</h3><p>The server checks every claim against the pages the agent actually saw, downgrades anything unsupported, and tests the console and docs links.</p></li>
+      <section className="section">
+        <div className="section-head">
+          <h2>How a guide is made</h2>
+        </div>
+        <ol className="how">
+          <li><h3>Research</h3><p>An agent reads the provider's official docs, then a few real-world reports about review times and errors.</p></li>
+          <li><h3>Write</h3><p>It lays out the route from your first connection to production, and marks who does each step: an agent, you, or the provider.</p></li>
+          <li><h3>Check</h3><p>The server checks each claim against the pages the agent actually read, downgrades anything unsupported, and tests the links.</p></li>
         </ol>
       </section>
-    </>
+    </div>
   );
 }

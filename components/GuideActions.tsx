@@ -12,20 +12,18 @@ export function GuideActions({ guide }: { guide: Guide }) {
   const [msg, setMsg] = useState("");
   const flash = (m: string) => {
     setMsg(m);
-    setTimeout(() => setMsg(""), 2500);
+    setTimeout(() => setMsg(""), 2200);
   };
 
   const shareUrl = () =>
-    guide.mode === "curated"
-      ? `${location.origin}/apps/${guide.slug}`
-      : `${location.origin}/g#${encodeGuide(guide)}`;
+    guide.mode === "curated" ? `${location.origin}/apps/${guide.slug}` : `${location.origin}/g#${encodeGuide(guide)}`;
 
   const copy = async (text: string, done: string) => {
     try {
       await navigator.clipboard.writeText(text);
       flash(done);
     } catch {
-      flash("Copy failed. Select and copy manually.");
+      flash("Couldn't copy. Your browser blocked clipboard access.");
     }
   };
 
@@ -39,13 +37,13 @@ export function GuideActions({ guide }: { guide: Guide }) {
 
   return (
     <div className="actions">
-      <button onClick={() => copy(shareUrl(), "Link copied")}>Copy share link</button>
-      <button onClick={() => copy(guideToMarkdown(guide), "Markdown copied")}>Copy as Markdown</button>
-      <button onClick={() => download(guideToMarkdown(guide), `${guide.slug}-oauth-guide.md`, "text/markdown")}>Download .md</button>
+      <button className="btn btn-primary btn-sm" onClick={() => copy(shareUrl(), "Link copied")}>Copy share link</button>
+      <button className="btn btn-secondary btn-sm" onClick={() => copy(guideToMarkdown(guide), "Markdown copied")}>Copy Markdown</button>
+      <button className="btn btn-ghost btn-sm" onClick={() => download(guideToMarkdown(guide), `${guide.slug}-oauth-guide.md`, "text/markdown")}>Download .md</button>
       {guide.mode === "generated" && (
-        <button onClick={() => download(JSON.stringify(guide, null, 2), `${guide.slug}.json`, "application/json")}>Download JSON</button>
+        <button className="btn btn-ghost btn-sm" onClick={() => download(JSON.stringify(guide, null, 2), `${guide.slug}.json`, "application/json")}>Download JSON</button>
       )}
-      <span className="flash" role="status">{msg}</span>
+      <span className={`toast ${msg ? "show" : ""}`} role="status">{msg}</span>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { Guide } from "@/lib/types";
 import { GuideView } from "./GuideView";
+import { SearchIcon } from "./AppSearch";
 
 type LogItem = { kind: string; text: string; sub?: string[]; ok?: boolean };
 
@@ -63,8 +64,8 @@ export function Generator() {
           if (!line.startsWith("data:")) continue;
           const e = JSON.parse(line.slice(5));
           if (e.type === "status") add({ kind: "status", text: e.message });
-          if (e.type === "search") add({ kind: "search", text: `Searched: ${e.query}` });
-          if (e.type === "results") add({ kind: "results", text: `${e.urls.length} results`, sub: e.urls.map((u: any) => host(u.url)) });
+          if (e.type === "search") add({ kind: "search", text: `Searched “${e.query}”` });
+          if (e.type === "results") add({ kind: "results", text: `${e.urls.length} result${e.urls.length === 1 ? "" : "s"}`, sub: e.urls.map((u: any) => host(u.url)) });
           if (e.type === "fetch") add({ kind: "fetch", text: `Reading ${e.url}` });
           if (e.type === "fetched" && !e.ok) add({ kind: "fetch", text: `Couldn't read ${e.url} (${e.error || "error"})`, ok: false });
           if (e.type === "writing") setChars(e.chars);
@@ -86,44 +87,67 @@ export function Generator() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return (
-    <div className="gen">
-      {!guide && (
-        <section className="gen-intro">
-          <h1>Generate a guide for any app</h1>
-          <p className="lede">An agent reads the provider's docs, works out the path to production, and checks its own sources. This usually takes 1–3 minutes.</p>
-        </section>
-      )}
+  const searches = log.filter((l) => l.kind === "search").length;
+  const reads = log.filter((l) => l.kind === "fetch" && l.ok !== false).length;
+
+  const searchBox = (
+    <div className="search-wrap">
       <form className="search" onSubmit={(e) => { e.preventDefault(); run(app, true); }}>
+        <SearchIcon />
         <label htmlFor="gen-app" className="sr-only">App name or website</label>
         <input id="gen-app" value={app} onChange={(e) => setApp(e.target.value)} placeholder="App name or website" disabled={running} />
         {needsCode && <input className="code-input" value={code} onChange={(e) => setCode(e.target.value)} placeholder="Access code" aria-label="Access code" />}
-        <button type="submit" disabled={running || !app.trim()}>{running ? `Researching… ${elapsed}s` : guide ? "Regenerate" : "Generate guide"}</button>
+        <button type="submit" className="btn btn-primary" disabled={running || !app.trim()}>
+          {running ? <><span className="spinner" aria-hidden />Researching</> : guide ? "Regenerate" : "Generate guide"}
+        </button>
       </form>
       {!running && !guide && !log.length && (
-        <p className="examples">Try: {EXAMPLES.map((x) => <button key={x} className="link" onClick={() => { setApp(x); run(x); }}>{x}</button>)}</p>
+        <p className="search-hint">
+          Try{" "}
+          {EXAMPLES.map((x) => (
+            <button key={x} className="chip-btn" onClick={() => { setApp(x); run(x); }}>{x}</button>
+          ))}
+        </p>
       )}
+    </div>
+  );
 
+  return (
+    <div className="gen">
+      {!guide && (
+        <section className="hero hero-sm glow-panel">
+          <span className="eyebrow">Live agent</span>
+          <h1>Generate a guide for any app</h1>
+          <p className="hero-sub">An agent reads the provider's docs, works out the route to production, and checks its own sources. This usually takes 1–3 minutes.</p>
+          {searchBox}
+        </section>
+      )}
+      {guide && <div className="gen-bar">{searchBox}</div>}
       {(log.length > 0 || running) && (
-        <section className={`trail ${guide ? "trail-done" : ""}`} aria-live="polite">
-          <h2>{guide ? "What the agent did" : "Agent at work"}</h2>
-          <ol>
+        <details className="activity" open={!guide}>
+          <summary>
+            <span className={`activity-dot ${running ? "live" : error ? "err" : "ok"}`} aria-hidden />
+            <span className="activity-title">{running ? "Agent at work" : error ? "Run stopped" : "Research trail"}</span>
+            <span className="muted small">
+              {searches} search{searches === 1 ? "" : "es"} · {reads} page{reads === 1 ? "" : "s"} read{running ? ` · ${elapsed}s` : ""}
+            </span>
+          </summary>
+          <ol className="activity-log" aria-live="polite">
             {log.map((l, i) => (
-              <li key={i} className={`t-${l.kind} ${l.ok === false ? "t-fail" : ""}`}>
-                {l.text}
-                {l.sub && <span className="t-sub">{l.sub.join(", ")}</span>}
+              <li key={i} className={`a-${l.kind} ${l.ok === false ? "a-fail" : ""}`}>
+                <span className="a-text">{l.text}</span>
+                {l.sub && <span className="a-sub">{l.sub.join(" · ")}</span>}
               </li>
             ))}
-            {running && chars > 0 && <li className="t-writing">Writing the guide… {Math.round(chars / 1000)}k characters</li>}
-            {running && <li className="t-pending">Working</li>}
+            {running && chars > 0 && <li className="a-writing"><span className="a-text">Writing the guide, {Math.round(chars / 1000)}k characters so far</span></li>}
           </ol>
-        </section>
+        </details>
       )}
 
       {error && (
-        <div className="error-box" role="alert">
+        <div className="alert" role="alert">
           <strong>Generation stopped.</strong> {error}
-          <div>Try again, or pick a <a href="/#library">curated guide</a>.</div>
+          <p className="small">Try again, or open a <a href="/#library">guide from the library</a>.</p>
         </div>
       )}
 
