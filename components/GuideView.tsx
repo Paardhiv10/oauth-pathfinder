@@ -1,6 +1,7 @@
 import type { Evidence, Guide, Owner } from "@/lib/types";
 import { GuideActions } from "./GuideActions";
 import { Meter } from "./Meter";
+import { RequirementCheck } from "./RequirementCheck";
 
 const OWNER_LABEL: Record<Owner, string> = { agent: "Agent", you: "You", provider: "Provider" };
 function ManagedAuthNote({ m }: { m: NonNullable<Guide["managedAuth"]> }) {
@@ -195,7 +196,7 @@ export function GuideView({ guide: g, permalink }: { guide: Guide; permalink?: b
               <ul className="checklist">
                 {g.requirements.map((r, i) => (
                   <li key={i}>
-                    <span className="check" aria-hidden />
+                    <RequirementCheck id={`req:${g.slug}:${i}`} label={r.item} />
                     <div>
                       <p className="check-item">{r.item}</p>
                       <p className="muted small">Needed for: {r.requiredFor}{r.note ? `. ${r.note}` : ""}</p>
