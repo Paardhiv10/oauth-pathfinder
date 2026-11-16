@@ -5,10 +5,14 @@ import slack from "../data/guides/slack.json";
 import notion from "../data/guides/notion.json";
 import outlook from "../data/guides/microsoft-outlook.json";
 import linkedin from "../data/guides/linkedin.json";
+import { lookupManagedAuth } from "./composio";
 
-// Curated library. Add a guide by dropping a JSON file in data/guides and importing it here
-// (or use `npm run promote` on a generated guide).
-export const LIBRARY: Guide[] = [github, slack, notion, outlook, gmail, linkedin] as unknown as Guide[];
+// Curated library. Add a guide by dropping a JSON file in data/guides and importing it here.
+// The Composio managed-app status is looked up at load time, not stored in the guide files.
+export const LIBRARY: Guide[] = ([github, slack, notion, outlook, gmail, linkedin] as unknown as Guide[]).map((g) => ({
+  ...g,
+  managedAuth: lookupManagedAuth(g.name),
+}));
 
 export function getGuide(slug: string): Guide | undefined {
   return LIBRARY.find((g) => g.slug === slug);

@@ -3,6 +3,44 @@ import { GuideActions } from "./GuideActions";
 import { Meter } from "./Meter";
 
 const OWNER_LABEL: Record<Owner, string> = { agent: "Agent", you: "You", provider: "Provider" };
+function ManagedAuthNote({ m }: { m: NonNullable<Guide["managedAuth"]> }) {
+  return (
+    <aside className={`managed managed-${m.status}`} aria-label="Managed OAuth app">
+      <div className="managed-head">
+        <span className="managed-dot" aria-hidden />
+        <h2>
+          {m.status === "managed" && "You may not need your own OAuth app"}
+          {m.status === "byo" && "You need your own OAuth app"}
+          {m.status === "not-listed" && "You need your own OAuth app"}
+        </h2>
+      </div>
+      {m.status === "managed" && (
+        <p>
+          Composio provides a managed OAuth app for <strong>{m.toolkit}</strong>, so your users can connect without you
+          registering an app or waiting on a review. Follow this guide if you need your own name on the consent
+          screen, scopes beyond Composio's defaults, or a quota that isn't shared with other Composio users.
+        </p>
+      )}
+      {m.status === "byo" && (
+        <p>
+          Composio supports <strong>{m.toolkit}</strong>, but does not provide the OAuth app. You register your own
+          and supply its client ID and secret, so this guide applies in full.
+        </p>
+      )}
+      {m.status === "not-listed" && (
+        <p>
+          This app is not in Composio's managed OAuth directory, so there is no shared app to fall back on. This guide
+          applies in full.
+        </p>
+      )}
+      <p className="muted small">
+        Looked up in <a href={m.url} target="_blank" rel="noreferrer">Composio's managed OAuth directory</a>, snapshot
+        of {m.checkedAt}. Matched by name, so confirm on the toolkit page.
+      </p>
+    </aside>
+  );
+}
+
 const STATUS_LABEL = { tested: "Tested", verified: "Verified", sourced: "Sourced", uncertain: "Uncertain" } as const;
 
 function Ev({ e, sources }: { e: Evidence; sources: Guide["sources"] }) {
@@ -25,7 +63,7 @@ function OwnerTag({ o }: { o: Owner }) {
   return <span className={`owner owner-${o}`}><span className="owner-dot" aria-hidden />{OWNER_LABEL[o]}</span>;
 }
 
-export function GuideView({ guide: g }: { guide: Guide }) {
+export function GuideView({ guide: g, permalink }: { guide: Guide; permalink?: boolean }) {
   const steps = g.phases.flatMap((p) => p.steps);
   const counts = {
     agent: steps.filter((s) => s.owner === "agent").length,
@@ -56,7 +94,7 @@ export function GuideView({ guide: g }: { guide: Guide }) {
         </div>
         <h1>{g.name}</h1>
         <p className="guide-summary">{g.summary}</p>
-        <GuideActions guide={g} />
+        <GuideActions guide={g} permalink={permalink} />
       </header>
       </div>
 
@@ -91,6 +129,8 @@ export function GuideView({ guide: g }: { guide: Guide }) {
           </div>
         </div>
       </section>
+
+      {g.managedAuth && <ManagedAuthNote m={g.managedAuth} />}
 
       <div className="guide-body">
         <nav className="toc" aria-label="On this page">

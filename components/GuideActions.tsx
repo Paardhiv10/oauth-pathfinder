@@ -4,11 +4,11 @@ import LZString from "lz-string";
 import type { Guide } from "@/lib/types";
 import { guideToMarkdown } from "@/lib/markdown";
 
-export function encodeGuide(g: Guide) {
+function encodeGuide(g: Guide) {
   return LZString.compressToEncodedURIComponent(JSON.stringify(g));
 }
 
-export function GuideActions({ guide }: { guide: Guide }) {
+export function GuideActions({ guide, permalink }: { guide: Guide; permalink?: boolean }) {
   const [msg, setMsg] = useState("");
   const flash = (m: string) => {
     setMsg(m);
@@ -16,7 +16,7 @@ export function GuideActions({ guide }: { guide: Guide }) {
   };
 
   const shareUrl = () =>
-    guide.mode === "curated" ? `${location.origin}/apps/${guide.slug}` : `${location.origin}/g#${encodeGuide(guide)}`;
+    guide.mode === "curated" || permalink ? `${location.origin}/apps/${guide.slug}` : `${location.origin}/g#${encodeGuide(guide)}`;
 
   const copy = async (text: string, done: string) => {
     try {

@@ -4,7 +4,7 @@
   "website": "https://www.linkedin.com",
   "category": "Social",
   "mode": "curated",
-  "updatedAt": "2026-10-27",
+  "updatedAt": "2026-11-12",
   "summary": "Sign-in and posting to your own profile are self-serve. Anything an agent typically wants, such as managing company pages, comments, or analytics, sits behind LinkedIn's business vetting. That requires a registered legal entity, a Company Page verified by its super admin, and a two-tier review with a screencast. If you're rejected you have to start over with a new app. Confirm your use case is allowed before you build.",
   "verdict": {
     "difficulty": 5,
@@ -55,7 +55,7 @@
       "steps": [
         { "title": "Fully integrate the APIs first", "detail": "Changing functionality after review may trigger another review.", "owner": "agent", "evidence": { "status": "verified", "sources": ["li-cm-review"] } },
         { "title": "Record a screencast for each use case", "detail": "High resolution and downloadable, with only your app on screen; narration is recommended. Show the full OAuth flow and each personal-data field you display. The agent can write the script.", "owner": "you", "evidence": { "status": "verified", "sources": ["li-cm-review"] } },
-        { "title": "Submit the Standard tier form with test credentials", "detail": "Reviewers check use case, privacy policy, data storage requirements and the screencast.", "owner": "provider", "evidence": { "status": "verified", "sources": ["li-cm-review"] } }
+        { "title": "Submit the Standard tier form with test credentials", "detail": "Reviewers check use case, privacy policy, data storage requirements and the screencast. A rejection here also sends you back to a new app and a new Development tier request.", "owner": "provider", "evidence": { "status": "verified", "sources": ["li-cm-review"] } }
       ]
     }
   ],
@@ -67,11 +67,12 @@
   ],
   "blockers": [
     { "symptom": "'Request access' is grayed out", "cause": "The app already has other products provisioned or pending", "fix": "Create a new app just for the Community Management request.", "evidence": { "status": "sourced", "sources": ["li-support"] } },
-    { "symptom": "Rejected", "cause": "Unsupported use case, mismatched business details, personal email, or an unverified Page", "fix": "Fix the qualification gap, then create a new app and submit again. The old app can't re-apply.", "evidence": { "status": "verified", "sources": ["li-cm-review"] } },
+    { "symptom": "Rejected", "cause": "Unsupported use case, mismatched business details, personal email, or an unverified Page", "fix": "Fix the qualification gap, then create a new app and submit a new Development tier request. This applies to a rejection at either tier; the old app can't re-apply.", "evidence": { "status": "verified", "sources": ["li-cm-review"] } },
     { "symptom": "Marketing Developer Platform isn't available", "cause": "Several sources say LinkedIn no longer grants MDP to new apps", "fix": "Request the specific product instead, e.g. Community Management API or Advertising API.", "evidence": { "status": "uncertain", "sources": ["serval-li"] } }
   ],
   "nuances": [
-    { "title": "API versions are retired regularly", "detail": "The official review page warns that a marketing API version is being retired on Nov 16, 2026. Pin a version and plan to upgrade.", "evidence": { "status": "verified", "sources": ["li-cm-review"] } },
+    { "title": "API versions are retired regularly", "detail": "The official review page carries a notice that Marketing version 202511 is sunset on 16 Nov 2026. Pin a version and plan to upgrade.", "evidence": { "status": "verified", "sources": ["li-cm-review"] } },
+    { "title": "A second app can reuse your Standard approval", "detail": "Submit another Standard tier form for the new app and give the client ID of the approved one. LinkedIn says this speeds up the review.", "evidence": { "status": "verified", "sources": ["li-cm-review"] } },
     { "title": "Approval can be withdrawn later", "detail": "LinkedIn may suspend access for non-compliance even after approval.", "evidence": { "status": "verified", "sources": ["li-cm-review"] } }
   ],
   "sources": [
@@ -84,9 +85,11 @@
   ],
   "verification": {
     "checked": [
-      "Every Development and Standard tier requirement, the rejection and re-apply rule, and the screencast requirements, by reading LinkedIn's current (2026-10) Community Management App Review page"
+      "Every Development and Standard tier requirement, the rejection and re-apply rule, and the screencast requirements, by reading LinkedIn's current (2026-10) Community Management App Review page",
+      "Re-read the same page in full on 12 Nov 2026 and compared it with the 16 claims in this guide that cite it. All held; one was made more precise (see Corrected) and one detail was added."
     ],
     "corrected": [
+      "The first version said a rejected app can't re-apply, without saying which tier. The page says so for both tiers, and a Standard tier rejection restarts at the Development tier. The guide now says this.",
       "Many guides still say to request the 'Marketing Developer Platform'. The current path is product-specific (Community Management API), and secondary sources report MDP is closed to new apps."
     ],
     "unverified": [

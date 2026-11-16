@@ -1,9 +1,6 @@
-/**
- * Offline end-to-end test of the generation pipeline.
- * Replays a realistic Anthropic streaming response (server tool use: web_search + web_fetch, then the guide JSON),
- * and fake link-probe responses, then asserts on parsing, the evidence check and the link test.
- * Run: npm test
- */
+// Offline end-to-end test: replays a recorded Claude streaming response through the agent and
+// asserts on parsing, the evidence check, the link test and the Composio lookup. Run: npm test
+import { lookupManagedAuth } from "../lib/composio";
 import assert from "node:assert/strict";
 import { runAgent, extractGuideJson, type AgentEvent } from "../lib/agent";
 
@@ -39,7 +36,7 @@ const guideJson = {
 
 function sse(events: any[]) {
   const text = events.map((e) => `event: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`).join("");
-  // split into odd-sized chunks to exercise the parser's buffering
+  // Odd-sized chunks exercise the parser's buffering.
   const chunks: Uint8Array[] = [];
   const enc = new TextEncoder().encode(text);
   for (let i = 0; i < enc.length; i += 97) chunks.push(enc.slice(i, i + 97));
@@ -71,7 +68,7 @@ const anthropicEvents = [
 ];
 
 let apiCalls = 0;
-globalThis.fetch = (async (url: any) => {
+globalThis.fetch = (async (url: any, init?: RequestInit) => {
   const u = String(url);
   if (u.startsWith("https://api.anthropic.com")) {
     apiCalls++;
@@ -87,7 +84,7 @@ globalThis.fetch = (async (url: any) => {
 }) as typeof fetch;
 
 (async () => {
-  // unit: extraction tolerates fences and chatter
+  // Extraction tolerates code fences and surrounding chatter.
   assert.deepEqual(extractGuideJson('blah <guide>```json\n{"a":1}\n```</guide>'), { a: 1 });
 
   const events: AgentEvent[] = [];
@@ -113,6 +110,18 @@ globalThis.fetch = (async (url: any) => {
   assert.equal(lc["https://acme.example/made-up"], "not-found");
   assert.ok(guide.verification.corrected.some((c) => c.includes("downgraded 3")), "downgrades reported");
   assert.ok(guide.verification.unverified.some((c) => c.includes("Imagined page")));
+
+  // Composio directory lookup is deterministic and tolerant of how people type app names.
+  assert.equal(guide.managedAuth?.status, "not-listed", "unknown app is not in the directory");
+  assert.ok(events.some((e) => e.type === "check" && e.message.startsWith("Composio directory")), "directory check streamed");
+  for (const n of ["Gmail (Google)", "Microsoft Outlook / Graph", "GitHub", "Monday.com", "QuickBooks Online", "notion.so"]) {
+    assert.equal(lookupManagedAuth(n).status, "managed", `${n} should match a managed toolkit`);
+  }
+  assert.equal(lookupManagedAuth("Microsoft Outlook / Graph").toolkit, "Outlook");
+  assert.equal(lookupManagedAuth("BambooHR").status, "byo");
+  assert.equal(lookupManagedAuth("X (Twitter)").status, "byo");
+  assert.equal(lookupManagedAuth("Dropbox Sign").status, "byo", "exact bring-your-own entry beats the managed 'Dropbox' prefix");
+  assert.equal(lookupManagedAuth("Dropbox").toolkit, "Dropbox");
 
   console.log("✓ pipeline test passed");
   console.log(events.filter((e) => e.type === "check").map((e: any) => "  " + e.message).join("\n"));

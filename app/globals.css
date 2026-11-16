@@ -470,3 +470,24 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 }
 .gen-bar { margin-top: 28px; }
 .gen-bar .search-wrap { max-width: 640px; }
+
+/* ───────────────── Managed OAuth app note ───────────────── */
+.managed {
+  margin-top: 20px; padding: 18px 22px; border-radius: 16px;
+  background: var(--surface); border: 1px solid var(--border);
+}
+.managed-managed {
+  border-color: color-mix(in srgb, var(--verified) 45%, var(--border));
+  background: color-mix(in srgb, var(--verified) 6%, var(--surface));
+}
+.managed-head { display: flex; align-items: center; gap: 10px; }
+.managed-head h2 { margin: 0; font-size: 1.02rem; letter-spacing: -0.01em; }
+.managed-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.managed-managed .managed-dot { background: var(--verified); }
+.managed p { margin: 8px 0 0; color: var(--text-2); line-height: 1.6; max-width: 78ch; }
+.managed p.small { margin-top: 10px; }
+.pill-managed {
+  display: inline-block; margin-left: 8px;
+  color: var(--verified); border-color: color-mix(in srgb, var(--verified) 40%, transparent);
+  background: color-mix(in srgb, var(--verified) 8%, var(--surface));
+}

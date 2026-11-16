@@ -1,0 +1,619 @@
+{
+  "slug": "calendly",
+  "name": "Calendly",
+  "website": "https://calendly.com",
+  "category": "Scheduling",
+  "mode": "generated",
+  "updatedAt": "2026-11-16",
+  "summary": "Your own account can connect to a sandbox OAuth app quickly, but external users need a Production app that meets Calendly's developer policy, with an HTTPS redirect and a privacy policy plus support instructions. I found no official OAuth review queue, so whether Calendly must approve a Production app (or a partner listing) is the decision that sets the real timeline and needs to be confirmed with Calendly first.",
+  "verdict": {
+    "difficulty": 3,
+    "label": "Moderate",
+    "timeToFirstConnection": "About 0.5 to 1 day of your hands-on work (my estimate). No provider wait is documented for a sandbox app.",
+    "timeToProduction": "Unknown. Your hands-on work is roughly 2 to 5 days (my estimate). The provider-side step is not documented in the official OAuth pages I read.",
+    "approvalWait": "Official pages describe no review queue for a Production OAuth app. A partner-program application exists, but its timing is not published. One secondary report describes credentials returned within one business day, but that was in a different integrator's flow. No firm Calendly review timeline was found.",
+    "handsOnEffort": "Sandbox app and an end-to-end test with your own account: a few hours. Production readiness: privacy policy, support instructions, HTTPS redirect, a minimal scope set, and token-refresh handling. Partner application if you want listing.",
+    "confidence": "medium"
+  },
+  "decideFirst": [
+    {
+      "question": "Will one account connect, or many users?",
+      "guidance": "Calendly's overview says OAuth is required when multiple accounts connect, while personal access tokens suit installs into a single account. If only your own company's account will ever be used, a personal access token avoids OAuth entirely.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s2"
+        ]
+      }
+    },
+    {
+      "question": "Sandbox or Production app, and which redirect URI?",
+      "guidance": "Start with a Sandbox app. Sandbox redirect URIs can be http on localhost, while Production redirect URIs must be https. Calendly recommends a second Production app when real customer data is involved.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "question": "Which scopes will you request?",
+      "guidance": "Request the minimum set. New OAuth apps get no API access until scopes are requested and approved, and a missing scope returns a 403. Examples from the catalog include scheduled_events:read and webhooks:write, and webhooks need the related read scopes.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s3"
+        ]
+      }
+    }
+  ],
+  "phases": [
+    {
+      "name": "1 · Prove the flow with your own account",
+      "goal": "Complete the authorization-code flow with PKCE using a Sandbox app and your own Calendly account.",
+      "duration": "About 0.5 to 1 day (my estimate)",
+      "steps": [
+        {
+          "title": "Log in to Calendly and open Developer tools",
+          "detail": "Use the Profile menu's Developer item, or manage apps at developer.calendly.com if the item is missing while accounts migrate.",
+          "owner": "you",
+          "url": "https://calendly.com/app/developer",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "s1"
+            ]
+          }
+        },
+        {
+          "title": "Create a Sandbox OAuth app",
+          "detail": "Set the app name (letters, numbers, hyphens and spaces only), enter exactly one redirect URI, choose Sandbox, then select at least one scope.",
+          "owner": "you",
+          "url": "https://calendly.com/app/developer",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "s1"
+            ]
+          }
+        },
+        {
+          "title": "Save the client ID, client secret and webhook signing key immediately",
+          "detail": "The client secret and webhook signing key cannot be viewed again after creation, and the client ID cannot be viewed again in Developer tools either.",
+          "owner": "you",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "s1"
+            ]
+          }
+        },
+        {
+          "title": "Implement PKCE and the token exchange",
+          "detail": "Generate a code verifier, derive an S256 challenge, redirect the user to the authorize endpoint, then exchange the code at the token endpoint. Server apps also send the client secret using HTTP Basic authentication.",
+          "owner": "agent",
+          "url": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "s1"
+            ]
+          }
+        },
+        {
+          "title": "Test the token against the current-user endpoint",
+          "detail": "Calendly's own test step calls the Get current user endpoint with the new access token.",
+          "owner": "agent",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "s5"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 · Prepare the app for other users",
+      "goal": "Create a Production app and meet the developer-policy items Calendly publishes, before any outside user connects.",
+      "duration": "About 2 to 5 days of hands-on work (my estimate), excluding any provider wait",
+      "steps": [
+        {
+          "title": "Write a privacy policy that covers your data use",
+          "detail": "Calendly's developer policy requires an industry-standard privacy policy that accurately describes data usage and meets applicable legal and consent requirements.",
+          "owner": "you",
+          "url": "https://developer.calendly.com/developer-policy",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "s7"
+            ]
+          }
+        },
+        {
+          "title": "Publish connection instructions and a support contact",
+          "detail": "The developer policy says the application must include instructions on how to connect Calendly and customer support information. It also asks that the app follow Calendly brand guidelines.",
+          "owner": "you",
+          "url": "https://developer.calendly.com/developer-policy",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "s7"
+            ]
+          }
+        },
+        {
+          "title": "Create the Production app with an https redirect and minimal scopes",
+          "detail": "Production redirect URIs must be https. Use a callback on a domain you control, and request only the scopes the features need.",
+          "owner": "you",
+          "url": "https://calendly.com/app/developer",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "s1",
+              "s3"
+            ]
+          }
+        },
+        {
+          "title": "Test refresh-token rotation and revocation handling",
+          "detail": "Each refresh invalidates the old refresh token, so store the new one every time. Handle invalid_grant by sending the user through authorization again.",
+          "owner": "agent",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "s6",
+              "s8"
+            ]
+          }
+        },
+        {
+          "title": "Ask Calendly whether production or partner review applies to you",
+          "detail": "Partner program applications are made through Calendly's partner portal, and the requirements appear to include a relevant audience or a maintained integration. Confirm in writing whether an OAuth Production app needs approval before you launch.",
+          "owner": "you",
+          "evidence": {
+            "status": "sourced",
+            "sources": [
+              "s10",
+              "s15"
+            ],
+            "note": "Partner program sources are secondary. Official OAuth pages do not describe this step."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 · Provider decision (only if Calendly requires it)",
+      "goal": "Get Calendly's go-ahead for external users or a partner listing.",
+      "duration": "Unknown. No published timeline found.",
+      "steps": [
+        {
+          "title": "Wait for Calendly's partner or marketplace decision",
+          "detail": "A developer on Calendly's community asked whether a marketplace submission needs extra validation. The excerpt I saw shows no answer.",
+          "owner": "provider",
+          "evidence": {
+            "status": "uncertain",
+            "sources": [
+              "s11"
+            ],
+            "note": "Community question only; no official answer found."
+          }
+        },
+        {
+          "title": "Confirm the app works for a non-owner account before launch",
+          "detail": "Have a second Calendly account connect and disconnect, and check that scoped calls and webhooks behave as expected.",
+          "owner": "you",
+          "evidence": {
+            "status": "uncertain",
+            "sources": [],
+            "note": "Testing advice is my own recommendation, not from a source."
+          }
+        }
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "item": "Calendly account for the developer",
+      "requiredFor": "Creating OAuth apps in Developer tools",
+      "note": "Official docs say you log in or sign up. A Workato page says developer accounts are separate from your Calendly user account, so confirm which one you use.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s1",
+          "s14"
+        ]
+      }
+    },
+    {
+      "item": "Calendly plan with API access",
+      "requiredFor": "Making API calls with a connected account",
+      "note": "Apideck says free Basic accounts have limited API access. This is not on the official pages I read.",
+      "evidence": {
+        "status": "sourced",
+        "sources": [
+          "s9"
+        ]
+      }
+    },
+    {
+      "item": "Https redirect URI on a domain you control",
+      "requiredFor": "Production app",
+      "note": "Domain control is my inference from the https rule. Confirm your DNS setup before creating the Production app.",
+      "evidence": {
+        "status": "uncertain",
+        "sources": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "item": "PKCE with S256",
+      "requiredFor": "Every OAuth app, Sandbox or Production",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "item": "Privacy policy",
+      "requiredFor": "Production distribution to external users",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s7"
+        ]
+      }
+    },
+    {
+      "item": "Connection instructions and customer support information",
+      "requiredFor": "Production distribution to external users",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s7"
+        ]
+      }
+    }
+  ],
+  "scopeTiers": [],
+  "blockers": [
+    {
+      "symptom": "Authorization request fails because no code challenge was sent (community report: 'Missing required parameter: code_verifier')",
+      "cause": "PKCE with S256 is mandatory for every OAuth app, so requests without a code challenge fail. A community user saw this error after switching the app's environment.",
+      "fix": "Generate a verifier, derive an S256 challenge, and include it in the authorize request and the token exchange.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s1",
+          "s12"
+        ],
+        "note": "The exact error text comes from a community post, not official docs."
+      }
+    },
+    {
+      "symptom": "Production app rejects a callback URL that uses http",
+      "cause": "Production redirect URIs must be https. Only Sandbox allows http on localhost.",
+      "fix": "Use an https callback for Production, or test with a Sandbox app on localhost.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "symptom": "API returns 403 indicating missing scopes",
+      "cause": "The scope required by the endpoint was not requested at authorization, or the user declined it during install.",
+      "fix": "Add the scope to the app and the authorize request, then have existing users re-authorize.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s3"
+        ]
+      }
+    },
+    {
+      "symptom": "Refresh request returns invalid_grant (HTTP 400 or 401)",
+      "cause": "The refresh token was already used. Refresh tokens are now single-use and rotate on each successful refresh.",
+      "fix": "Overwrite the stored refresh token with the new one from every successful response. If the token is invalid, reauthorize the user.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s6"
+        ]
+      }
+    },
+    {
+      "symptom": "Client secret is no longer visible",
+      "cause": "Calendly does not show the client secret or webhook signing key after creation.",
+      "fix": "Store them when the app is created. If lost, delete the app and create a new one (my inference from the documented delete option).",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "symptom": "A connected user's token stops working",
+      "cause": "Tokens are revoked if the account's login email, password or login method changes, or if the token is revoked manually.",
+      "fix": "Detect the failure and send the user through reauthorization.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s8"
+        ]
+      }
+    }
+  ],
+  "nuances": [
+    {
+      "title": "Token lifetimes",
+      "detail": "Access tokens expire after 2 hours. Refresh tokens do not expire until used. Authorization codes expire after 10 minutes.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s4",
+          "s5"
+        ]
+      }
+    },
+    {
+      "title": "Refresh token rotation",
+      "detail": "Refresh tokens are single-use. Each successful token request returns a new access token and a new refresh token, and the old refresh token is revoked immediately. Older pages that describe reusable refresh tokens are out of date.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s6"
+        ],
+        "note": "Older Calendly pages say refresh tokens don't expire until used. The rotation guide adds single-use behavior."
+      }
+    },
+    {
+      "title": "Token request rate limit",
+      "detail": "Only 8 OAuth tokens per user can be requested within one minute.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s4"
+        ]
+      }
+    },
+    {
+      "title": "Per-user authorization",
+      "detail": "Each connecting user gets a token for their own account. The token payload identifies the user and organization URIs.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s8"
+        ]
+      }
+    },
+    {
+      "title": "Redirect URI must match exactly",
+      "detail": "Enter exactly one redirect URI when creating the app, and send the same one in the authorize and token requests.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s1"
+        ]
+      }
+    },
+    {
+      "title": "Webhooks need their own scopes",
+      "detail": "Webhook subscriptions require webhooks:write to create them and webhooks:read to list them, and the related read scopes to receive payloads.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s3"
+        ]
+      }
+    }
+  ],
+  "sources": [
+    {
+      "id": "s1",
+      "title": "Creating an OAuth app (Calendly developer docs)",
+      "url": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app",
+      "kind": "official",
+      "retrieved": "fetched"
+    },
+    {
+      "id": "s2",
+      "title": "Authentication overview (Calendly developer docs)",
+      "url": "https://developer.calendly.com/docs/authentication/overview",
+      "kind": "official",
+      "retrieved": "fetched"
+    },
+    {
+      "id": "s3",
+      "title": "Authorization scopes (Calendly developer docs)",
+      "url": "https://developer.calendly.com/docs/authentication/scopes",
+      "kind": "official",
+      "retrieved": "fetched"
+    },
+    {
+      "id": "s4",
+      "title": "Get Access Token (Calendly API reference)",
+      "url": "https://developer.calendly.com/api-docs/calendly-o-auth/o-auth/post-oauth-refresh-token",
+      "kind": "official",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s5",
+      "title": "How to access Calendly data on behalf of authenticated users",
+      "url": "https://developer.calendly.com/how-to-access-calendly-data-on-behalf-of-authenticated-users",
+      "kind": "official",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s6",
+      "title": "How to handle single-use refresh tokens (Calendly developer docs)",
+      "url": "https://developer.calendly.com/docs/authentication/refresh-token-rotation-guide",
+      "kind": "official",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s7",
+      "title": "Developer Policy (Calendly)",
+      "url": "https://developer.calendly.com/developer-policy",
+      "kind": "official",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s8",
+      "title": "Frequently Asked Questions (Calendly developer docs)",
+      "url": "https://developer.calendly.com/frequently-asked-questions",
+      "kind": "official",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s9",
+      "title": "How to create an OAuth app in Calendly (Apideck)",
+      "url": "https://developers.apideck.com/connectors/calendly/docs/application_owner+oauth_credentials",
+      "kind": "secondary",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s10",
+      "title": "Calendly Partner Program (Tech Partner Program Directory)",
+      "url": "https://partner-program-directory.partnerfleet.io/partners/calendly-partner-program",
+      "kind": "secondary",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s11",
+      "title": "Calendly community: Add Integration flow for Partner Marketplace",
+      "url": "https://community.calendly.com/how-do-i-40/how-to-implement-add-integration-my-app-oauth-sign-in-redirect-back-to-calendly-flow-for-partner-marketplace-4819",
+      "kind": "community",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s12",
+      "title": "Calendly Developer Community: environment and code_verifier thread",
+      "url": "https://community.calendly.com/developer-community-60/index7.html",
+      "kind": "community",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s13",
+      "title": "Setting Up Calendly OAuth App (Klavis AI)",
+      "url": "https://www.klavis.ai/docs/knowledge-base/oauth_app/calendly",
+      "kind": "secondary",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s14",
+      "title": "Workato connectors: Calendly",
+      "url": "https://docs.workato.com/connectors/calendly.html",
+      "kind": "secondary",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s15",
+      "title": "Calendly Partner Program (Xamplify)",
+      "url": "https://xamplify.com/partner-programs/calendly/",
+      "kind": "secondary",
+      "retrieved": "search-result"
+    }
+  ],
+  "verification": {
+    "checked": [
+      "Agent ran 7 searches and read 3 pages on 2026-11-16",
+      "Official Calendly OAuth app creation page: steps, redirect URI rules, PKCE requirement, credential handling (fetched)",
+      "Official authentication overview: OAuth vs personal access token guidance (fetched)",
+      "Official scopes page: scope catalog, no-access-by-default rule, 403 troubleshooting (fetched)",
+      "Official token endpoint and authorization-code pages: token lifetimes, rate limit (search excerpts)",
+      "Official refresh-token rotation guide and FAQ: single-use refresh, revocation triggers (search excerpts)",
+      "Official developer policy: privacy policy, connection instructions, support info (search excerpt)",
+      "Secondary and community sources for partner program, timelines, and error messages"
+    ],
+    "corrected": [
+      "Conflict: Klavis says Calendly does not use traditional OAuth scopes. The official scopes page says scopes control access and new apps get no API access until scopes are requested. The official page is used.",
+      "Conflict: Apideck says the app name cannot include the word Calendly. The official page only restricts names to letters, numbers, hyphens and spaces. Treat the Apideck rule as unconfirmed.",
+      "Conflict: older Calendly pages describe refresh tokens as valid until used, while the rotation guide makes them single-use. The newer rotation guide is used.",
+      "Conflict on timing: Apideck reports credentials within one business day from Developer Support in its own partner flow, while official pages describe no review timeline. Both are reported here and neither is generalized to all developers."
+    ],
+    "unverified": [
+      "Whether Calendly requires approval before a Production OAuth app serves outside users",
+      "Partner program application requirements and review timing",
+      "Whether a marketplace listing review applies to OAuth apps",
+      "Free Basic plan API limits (Apideck only)",
+      "Hands-on time estimates in the phases",
+      "Link test failed for How to access Calendly data on behalf of authenticated users (https://developer.calendly.com/how-to-access-calendly-data-on-behalf-of-authenticated-users): 404",
+      "Nobody signed in to the provider's console or created an app for this guide. The steps are taken from the documentation, not from a setup attempt."
+    ]
+  },
+  "consoleUrl": "https://calendly.com/app/developer",
+  "docsUrl": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app",
+  "linkChecks": [
+    {
+      "url": "https://calendly.com/app/developer",
+      "label": "Developer console",
+      "status": 200,
+      "result": "login-wall",
+      "finalUrl": "https://calendly.com/app/login",
+      "checkedAt": "2026-11-16T05:59:23.798Z"
+    },
+    {
+      "url": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app",
+      "label": "Main OAuth docs",
+      "status": 200,
+      "result": "reachable",
+      "checkedAt": "2026-11-16T05:59:23.800Z"
+    },
+    {
+      "url": "https://developer.calendly.com/docs/authentication/overview",
+      "label": "Authentication overview (Calendly developer docs)",
+      "status": 200,
+      "result": "reachable",
+      "checkedAt": "2026-11-16T05:59:23.801Z"
+    },
+    {
+      "url": "https://developer.calendly.com/docs/authentication/scopes",
+      "label": "Authorization scopes (Calendly developer docs)",
+      "status": 200,
+      "result": "reachable",
+      "checkedAt": "2026-11-16T05:59:23.802Z"
+    },
+    {
+      "url": "https://developer.calendly.com/api-docs/calendly-o-auth/o-auth/post-oauth-refresh-token",
+      "label": "Get Access Token (Calendly API reference)",
+      "status": 200,
+      "result": "reachable",
+      "checkedAt": "2026-11-16T05:59:23.802Z"
+    },
+    {
+      "url": "https://developer.calendly.com/how-to-access-calendly-data-on-behalf-of-authenticated-users",
+      "label": "How to access Calendly data on behalf of authenticated users",
+      "status": 404,
+      "result": "not-found",
+      "checkedAt": "2026-11-16T05:59:23.803Z"
+    },
+    {
+      "url": "https://developer.calendly.com/docs/authentication/refresh-token-rotation-guide",
+      "label": "How to handle single-use refresh tokens (Calendly developer docs)",
+      "status": 200,
+      "result": "reachable",
+      "checkedAt": "2026-11-16T05:59:23.804Z"
+    },
+    {
+      "url": "https://developer.calendly.com/developer-policy",
+      "label": "Developer Policy (Calendly)",
+      "status": 200,
+      "result": "redirect",
+      "finalUrl": "https://calendly.com/legal/developer-policy",
+      "checkedAt": "2026-11-16T05:59:23.804Z"
+    }
+  ],
+  "managedAuth": {
+    "status": "managed",
+    "toolkit": "Calendly",
+    "slug": "calendly",
+    "url": "https://docs.composio.dev/toolkits/managed-auth",
+    "checkedAt": "2026-11-12"
+  }
+}

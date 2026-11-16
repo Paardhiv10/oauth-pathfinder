@@ -1,4 +1,4 @@
-export const GUIDE_SCHEMA = `
+const GUIDE_SCHEMA = `
 type EvidenceStatus = "verified" | "sourced" | "uncertain";
 // verified  = you read the claim on an OFFICIAL provider page in this session (fetched it, or the search excerpt states it)
 // sourced   = backed by a secondary source (integration platforms, assessor blogs) or by an official page you did not read
@@ -56,7 +56,7 @@ Judgment rules:
 - Tag every claim with evidence honestly. Only use "verified" when an official page you actually saw states it. Never invent URLs; every source must be a URL you saw in search results or fetched.
 - When sources conflict, pick the best-supported answer and record the conflict in verification.corrected or the evidence note.
 - Prefer fewer, accurate items over many vague ones. No marketing language.
-- Mention that a managed-auth platform (e.g. Composio's managed OAuth apps) may let them skip creating their own app, as a decideFirst item only if relevant.
+- Do not state whether a managed-auth platform (e.g. Composio) already offers an OAuth app for this provider. The server looks that up in Composio's directory and adds it to the guide.
 
 Output: after researching, reply with ONLY a JSON object matching this TypeScript type, wrapped in <guide></guide> tags. No markdown fences, no commentary outside the tags.
 ${GUIDE_SCHEMA}`;

@@ -4,7 +4,7 @@
   "website": "https://mail.google.com",
   "category": "Email",
   "mode": "curated",
-  "updatedAt": "2026-10-27",
+  "updatedAt": "2026-11-12",
   "summary": "You can connect your own Gmail in under an hour, but letting outside users connect means Google verification. If you need to read or modify mail, that also means a paid third-party security assessment (CASA) that repeats every year. Plan for weeks, not days, and pick scopes before you build.",
   "verdict": {
     "difficulty": 4,
@@ -13,7 +13,7 @@
     "timeToProduction": "Sensitive scopes only: ~1–3 weeks. Restricted scopes (read/modify mail): typically 4–8+ weeks",
     "approvalWait": "Google says sensitive-scope review can take up to 10 days; restricted scopes can take several weeks plus the security assessment. Community reports of 5–8+ week stalls are common.",
     "handsOnEffort": "1–2 days of prep (policy pages, domain verification, demo video, justifications); more if the assessment finds issues",
-    "confidence": "high"
+    "confidence": "medium"
   },
   "decideFirst": [
     {
@@ -24,7 +24,7 @@
     {
       "question": "Which Gmail scopes do you actually need?",
       "guidance": "This one choice sets your timeline. Sending only (gmail.send) is Sensitive: verification with a demo video, no security assessment. Reading, modifying, or drafting mail (gmail.readonly, gmail.modify, gmail.compose, mail.google.com) is Restricted: verification plus an annual CASA assessment. Labels-only is Non-sensitive.",
-      "evidence": { "status": "sourced", "sources": ["unified-gmail", "g-restricted"], "note": "One widely read third-party article classifies gmail.readonly as Sensitive. Google's restricted-scope materials and two other integration platforms list it as Restricted. We use Restricted." }
+      "evidence": { "status": "verified", "sources": ["g-gmail-scopes", "g-restricted"], "note": "One widely read third-party article classifies gmail.readonly as Sensitive. Google's own Gmail scopes page lists it as Restricted (read 12 Nov 2026)." }
     },
     {
       "question": "Do you need your own OAuth app at all?",
@@ -50,7 +50,7 @@
       "goal": "Have a submission that passes on the first try",
       "duration": "1–2 days of work",
       "steps": [
-        { "title": "Verify domain ownership in Google Search Console", "detail": "Use an account that is Owner or Editor on the Cloud project. Every domain on the consent screen must be verified, including redirect URI domains.", "owner": "you", "evidence": { "status": "sourced", "sources": ["g-brand", "singh-brand"] } },
+        { "title": "Verify domain ownership in Google Search Console", "detail": "Use an account that is Owner or Editor on the Cloud project. Every domain on the consent screen must be verified, including redirect URI domains.", "owner": "you", "evidence": { "status": "verified", "sources": ["sensitive-verif", "g-brand", "singh-brand"], "note": "Search Console domain verification is on Google's page. The Owner/Editor and redirect-URI details come from a secondary source." } },
         { "title": "Publish homepage and privacy policy on that domain", "detail": "The privacy policy must be on the same domain as the homepage, linked from the homepage, and disclose how you use Google user data, including the Limited Use disclosure. An agent can draft the Google-specific sections, but have a human or lawyer approve them.", "owner": "agent", "evidence": { "status": "verified", "sources": ["sensitive-verif", "g-brand"] } },
         { "title": "Write a justification for each scope", "detail": "Explain the feature that needs the scope and why a narrower scope will not work. The agent can draft these from your feature list.", "owner": "agent", "evidence": { "status": "verified", "sources": ["sensitive-verif"] } },
         { "title": "Record the demo video", "detail": "Show the consent screen with your app name, the OAuth client ID in the address bar, and every requested scope in use. The agent can write the shot list; you record it.", "owner": "you", "evidence": { "status": "sourced", "sources": ["singh-timeline", "g-consent-help"] } }
@@ -63,21 +63,21 @@
       "steps": [
         { "title": "Publish the app ('In production') and submit in the Verification Center", "detail": "Track status there. Watch the developer-contact inbox for messages from Trust & Safety, and reply quickly. Every round trip adds days.", "owner": "you", "evidence": { "status": "sourced", "sources": ["sensitive-verif"] } },
         { "title": "Google reviews brand + scope use", "detail": "Brand verification can happen as part of sensitive-scope verification.", "owner": "provider", "evidence": { "status": "verified", "sources": ["sensitive-verif"] } },
-        { "title": "Restricted scopes only: complete the CASA security assessment", "detail": "Google tells you when to start. You hire a Google-approved assessor (fees range from a few hundred to a few thousand USD), fix any findings, and get a Letter of Validation. This repeats every 12 months.", "owner": "you", "evidence": { "status": "sourced", "sources": ["g-restricted", "g-health-verif", "g-reassess"] } }
+        { "title": "Restricted scopes only: complete the CASA security assessment", "detail": "Needed if restricted data is stored on, or passes through, your servers. Google tells you when to start. You hire a Google-approved assessor (fees range from a few hundred to a few thousand USD), fix any findings, and get a Letter of Validation. This repeats every 12 months.", "owner": "you", "evidence": { "status": "sourced", "sources": ["g-restricted", "g-health-verif", "g-reassess"], "note": "The assessment and its 12-month cadence are on Google's restricted-scope page. The fee range is not; it comes from a different Google page." } }
       ]
     }
   ],
   "requirements": [
-    { "item": "Verified domain (Search Console) for homepage, policy and redirect URIs", "requiredFor": "Production", "evidence": { "status": "sourced", "sources": ["g-brand", "singh-brand"] } },
+    { "item": "Verified domain (Search Console) for homepage, policy and redirect URIs", "requiredFor": "Production", "evidence": { "status": "verified", "sources": ["sensitive-verif", "g-brand", "singh-brand"], "note": "Google's page says to verify your project's authorized domains. That redirect-URI domains count comes from a secondary source." } },
     { "item": "Privacy policy on the same domain as the homepage, with the Google user-data / Limited Use disclosure", "requiredFor": "Production", "evidence": { "status": "verified", "sources": ["sensitive-verif"] } },
     { "item": "Per-scope justification + demo video", "requiredFor": "Sensitive & restricted scopes", "evidence": { "status": "verified", "sources": ["sensitive-verif"] } },
-    { "item": "Annual third-party CASA assessment (Letter of Validation)", "requiredFor": "Restricted scopes, if data passes through your servers", "evidence": { "status": "sourced", "sources": ["g-restricted", "g-reassess"] } },
+    { "item": "Third-party CASA security assessment at least every 12 months (Letter of Validation)", "requiredFor": "Restricted scopes, if you store or transmit the data on servers", "evidence": { "status": "verified", "sources": ["g-restricted", "g-reassess"] } },
     { "item": "Consistent app name, logo and support email across app, site and submission", "requiredFor": "Brand verification", "evidence": { "status": "sourced", "sources": ["singh-brand"] } }
   ],
   "scopeTiers": [
-    { "tier": "Non-sensitive", "examples": "openid, email, profile, gmail.labels", "consequence": "Basic verification at most; no demo video", "evidence": { "status": "sourced", "sources": ["unified-gmail", "nylas-denied"] } },
-    { "tier": "Sensitive", "examples": "gmail.send", "consequence": "Verification with justification + demo video. No security assessment.", "evidence": { "status": "sourced", "sources": ["unified-gmail", "emailengine"] } },
-    { "tier": "Restricted", "examples": "mail.google.com, gmail.readonly, gmail.modify, gmail.compose, gmail.metadata, gmail.insert, gmail.settings.*", "consequence": "Verification + annual CASA security assessment", "evidence": { "status": "sourced", "sources": ["unified-gmail", "g-restricted"], "note": "Gmail has no narrow 'only these messages' scope comparable to Drive's drive.file." } }
+    { "tier": "Non-sensitive", "examples": "gmail.labels, plus the sign-in scopes openid, email, profile", "consequence": "Basic verification at most; no demo video", "evidence": { "status": "sourced", "sources": ["g-gmail-scopes", "unified-gmail", "nylas-denied"], "note": "gmail.labels is listed as Non-sensitive on Google's Gmail scopes page. What review it triggers comes from secondary sources." } },
+    { "tier": "Sensitive", "examples": "gmail.send", "consequence": "Verification with justification + demo video. No security assessment.", "evidence": { "status": "verified", "sources": ["g-gmail-scopes", "sensitive-verif"] } },
+    { "tier": "Restricted", "examples": "mail.google.com, gmail.readonly, gmail.modify, gmail.compose, gmail.metadata, gmail.insert, gmail.settings.basic, gmail.settings.sharing", "consequence": "Verification, plus a CASA security assessment at least every 12 months if the data is stored on or passes through your servers", "evidence": { "status": "verified", "sources": ["g-gmail-scopes", "g-restricted"], "note": "Gmail has no narrow 'only these messages' scope comparable to Drive's drive.file." } }
   ],
   "blockers": [
     { "symptom": "Tokens stop working exactly 7 days after users connect", "cause": "The app is External and still in Testing. Refresh tokens issued in Testing expire after 7 days.", "fix": "Publish to In production (you can do this before verification is done), or use Internal for single-org use.", "evidence": { "status": "sourced", "sources": ["g-audience", "unipile-token"] } },
@@ -88,13 +88,14 @@
   ],
   "nuances": [
     { "title": "The 100-user cap counts for the project's whole lifetime", "detail": "Creating a new OAuth client in the same project does not reset it.", "evidence": { "status": "sourced", "sources": ["g-audience"] } },
-    { "title": "Adding a restricted scope later means another review", "detail": "Your timeline resets for that scope, and the assessment may need to be expanded.", "evidence": { "status": "sourced", "sources": ["g-restricted"] } },
+    { "title": "Adding a restricted scope later means another review", "detail": "Your timeline resets for that scope, and the assessment may need to be expanded.", "evidence": { "status": "sourced", "sources": ["g-restricted"], "note": "Not stated in these words on the page we read; inferred from how verification is tied to the scopes you request." } },
     { "title": "Official timelines and real experience differ", "detail": "Google's sensitive-scope page says up to 10 days. Forum threads from 2026 describe 5–8 week stalls. Use 2–4 weeks for planning.", "evidence": { "status": "uncertain", "sources": ["sensitive-verif", "forum-stuck1"] } }
   ],
   "sources": [
     { "id": "composio-managed", "title": "Composio — Managed OAuth apps", "url": "https://docs.composio.dev/toolkits/managed-auth", "kind": "official", "retrieved": "fetched" },
-    { "id": "sensitive-verif", "title": "Google — Sensitive scope verification", "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification", "kind": "official", "retrieved": "search-result" },
-    { "id": "g-restricted", "title": "Google — Restricted scope verification", "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification", "kind": "official", "retrieved": "search-result" },
+    { "id": "sensitive-verif", "title": "Google — Sensitive scope verification", "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/sensitive-scope-verification", "kind": "official", "retrieved": "fetched" },
+    { "id": "g-gmail-scopes", "title": "Google — Choose Gmail API scopes (classification of every scope)", "url": "https://developers.google.com/workspace/gmail/api/auth/scopes", "kind": "official", "retrieved": "fetched" },
+    { "id": "g-restricted", "title": "Google — Restricted scope verification", "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification", "kind": "official", "retrieved": "fetched" },
     { "id": "g-audience", "title": "Google Cloud Help — Manage app audience", "url": "https://support.google.com/cloud/answer/15549945", "kind": "official", "retrieved": "search-result" },
     { "id": "g-brand", "title": "Google Cloud Help — Brand verification requirements", "url": "https://support.google.com/cloud/answer/13464321", "kind": "official", "retrieved": "search-result" },
     { "id": "g-consent-help", "title": "Google Cloud Help — Submitting for verification", "url": "https://support.google.com/cloud/answer/13461325", "kind": "official", "retrieved": "search-result" },
@@ -113,17 +114,23 @@
   ],
   "verification": {
     "checked": [
-      "Sensitive-scope requirements (narrowest scope, policy on same domain, justification + demo video, up to 10 days) against Google's official page",
+      "Read in full on 12 Nov 2026: Google's sensitive-scope page. Confirmed 'up to 10 days', a public homepage, a privacy policy on the same domain, Search Console domain verification, a justification per scope and a demo video.",
+      "Read in full on 12 Nov 2026: Google's Gmail scopes page. Confirmed the tier of every scope named in this guide: gmail.labels is Non-sensitive, gmail.send is Sensitive, and the eight read/modify/settings scopes are Restricted.",
+      "Read in full on 12 Nov 2026: Google's restricted-scope page. Confirmed 'several weeks', CASA as the framework, and an assessment at least every 12 months when restricted data is stored on or sent through your servers.",
       "100-user lifetime cap and 7-day Testing token expiry against Google Cloud Help",
       "Annual CASA requirement and Letter of Validation against Google's restricted-scope and reassessment pages"
     ],
     "corrected": [
-      "A third-party guide (Unipile) lists gmail.readonly as Sensitive. Google's restricted-scope materials and two other integration platforms list it as Restricted, so we classify it as Restricted.",
+      "A third-party guide (Unipile) lists gmail.readonly as Sensitive. Google's Gmail scopes page lists it as Restricted. The first version of this guide relied on secondary sources for that; it is now confirmed on Google's page.",
+      "The first version said restricted scopes always need the assessment. Google's page ties it to storing or transmitting the data on servers, so the guide now states that condition.",
+      "Confidence lowered from high to medium: the requirements are confirmed, but real review times are not.",
       "Assessment cost and duration ($500–$4,500; 2–3 weeks for tier 2) come from Google's Health API verification page, not the Gmail page. We show them as an indication only."
     ],
     "unverified": [
       "We did not run the verification submission ourselves; it needs a real domain, a live product and a Google account.",
-      "Real-world review times come from forum reports, not controlled data."
+      "Real-world review times come from forum reports, not controlled data.",
+      "Google's restricted-scope page gives no assessment cost. The fee range shown is from Google's Health API page.",
+      "The Google Cloud Help pages (test-user cap, 7-day token expiry, brand verification) were seen as search excerpts only, not read in full."
     ]
   },
   "consoleUrl": "https://console.cloud.google.com/auth/overview",

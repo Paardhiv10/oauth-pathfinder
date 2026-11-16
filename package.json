@@ -1,7 +1,7 @@
 {
   "name": "oauth-pathfinder",
   "version": "1.0.0",
-  "description": "",
+  "description": "OAuth app setup and approval guides, with live agent generation for any app",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

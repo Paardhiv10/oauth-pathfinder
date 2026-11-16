@@ -1,10 +1,8 @@
 // Guide schema shared by curated guides (data/guides/*.json) and agent-generated guides.
 
 export type EvidenceStatus = "tested" | "verified" | "sourced" | "uncertain";
-// tested    = a step was actually attempted (e.g. a URL was probed, a flow was run)
-// verified  = the claim matches text on an official provider page retrieved during research (fetched, or a search excerpt)
-// sourced   = backed by a secondary source, or an official page the researcher did not actually retrieve
-// uncertain = inferred, conflicting sources, or community reports only
+// tested = actually attempted · verified = read on an official page · sourced = secondary source
+// or an official page that was not retrieved · uncertain = inferred or conflicting
 
 export interface Evidence {
   status: EvidenceStatus;
@@ -13,9 +11,7 @@ export interface Evidence {
 }
 
 export type Owner = "agent" | "you" | "provider";
-// agent    = an AI agent can do this for you (research, drafting, config, code, testing)
-// you      = needs a human with account access, legal authority, or a decision
-// provider = waiting on the provider (review, approval)
+// Who does the step: an AI agent, a human with account access or authority, or the provider's review.
 
 export interface Step {
   title: string;
@@ -76,6 +72,17 @@ export interface LinkCheck {
   checkedAt: string;
 }
 
+// Whether Composio already provides an OAuth app for this provider. Looked up in a dated snapshot
+// of Composio's directory by the server, never claimed by the model.
+export interface ManagedAuth {
+  status: "managed" | "byo" | "not-listed";
+  // managed = Composio provides the app · byo = bring your own app · not-listed = not in the directory
+  toolkit?: string; // the directory entry this app was matched to
+  slug?: string;
+  url: string;
+  checkedAt: string;
+}
+
 export interface Guide {
   slug: string;
   name: string;
@@ -106,6 +113,7 @@ export interface Guide {
     unverified: string[];
   };
   linkChecks?: LinkCheck[];
+  managedAuth?: ManagedAuth;
   consoleUrl?: string;
   docsUrl?: string;
 }

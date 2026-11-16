@@ -26,14 +26,8 @@ function lookup(url: string, log: RetrievalLog): "fetched" | "search-result" | "
   return "not-retrieved";
 }
 
-/**
- * Deterministic evidence check run on every generated guide:
- *  1. Mark each cited source as fetched / seen in search / never retrieved by the agent.
- *  2. "verified" requires at least one OFFICIAL source the agent actually retrieved; otherwise -> "sourced".
- *  3. Claims whose only sources were never retrieved (possible hallucinated URL) -> "uncertain".
- *  4. Claims with no sources at all can't be better than "uncertain".
- *  5. "tested" is reserved for things this app actually ran (link probes), so model-claimed "tested" -> "verified" (then re-checked).
- */
+// Downgrades claims the retrieval log does not support: "verified" needs an official source the
+// agent really retrieved, and a claim with no retrieved source becomes "uncertain".
 export function applyEvidenceCheck(guide: Guide, log: RetrievalLog) {
   const sources = guide.sources.map((s) => ({ ...s, retrieved: lookup(s.url, log) }));
   const byId = new Map(sources.map((s) => [s.id, s]));

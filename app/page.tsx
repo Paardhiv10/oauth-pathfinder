@@ -2,9 +2,12 @@ import Link from "next/link";
 import { LIBRARY } from "@/lib/guides";
 import { AppSearch } from "@/components/AppSearch";
 import { Meter } from "@/components/Meter";
+import { generatedGuides } from "@/lib/generated";
 
 export default function Home() {
   const sorted = [...LIBRARY].sort((a, b) => a.verdict.difficulty - b.verdict.difficulty);
+  const curatedSlugs = new Set(LIBRARY.map((g) => g.slug));
+  const generated = generatedGuides().filter((g) => !curatedSlugs.has(g.slug));
   return (
     <div className="home">
       <section className="hero glow-panel">
@@ -35,6 +38,7 @@ export default function Home() {
                   <div>
                     <h3>{g.name}</h3>
                     <span className="muted small">{g.category}</span>
+                    {g.managedAuth?.status === "managed" && <span className="pill pill-managed">Managed app available</span>}
                   </div>
                   <Meter d={g.verdict.difficulty} label={g.verdict.label} />
                 </div>
@@ -54,6 +58,35 @@ export default function Home() {
           </li>
         </ul>
       </section>
+
+      {generated.length > 0 && (
+        <section id="generated" className="section">
+          <div className="section-head">
+            <h2>Written by the agent</h2>
+            <p className="muted">Saved output from live runs. Nobody has reviewed or edited these.</p>
+          </div>
+          <ul className="cards">
+            {generated.map((g) => (
+              <li key={g.slug}>
+                <Link href={`/apps/${g.slug}`} className="card">
+                  <div className="card-top">
+                    <div>
+                      <h3>{g.name}</h3>
+                      <span className="muted small">{g.category}</span>
+                      {g.managedAuth?.status === "managed" && <span className="pill pill-managed">Managed app available</span>}
+                    </div>
+                    <Meter d={g.verdict.difficulty} label={g.verdict.label} />
+                  </div>
+                  <dl className="card-times">
+                    <div><dt>Your own account</dt><dd>{g.verdict.timeToFirstConnection}</dd></div>
+                    <div><dt>Any user can connect</dt><dd>{g.verdict.timeToProduction}</dd></div>
+                  </dl>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="section">
         <div className="section-head">

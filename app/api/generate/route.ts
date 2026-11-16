@@ -1,4 +1,5 @@
-import { runAgent, type AgentEvent } from "@/lib/agent";
+import type { AgentEvent } from "@/lib/agent";
+import { generateGuide, isConfigured, modelName } from "@/lib/generate";
 import { findInLibrary } from "@/lib/guides";
 import type { Guide } from "@/lib/types";
 
@@ -14,11 +15,9 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const app = String(body.app || "").trim().slice(0, 120);
   const force = Boolean(body.force);
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  const model = process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
 
   if (!app) return Response.json({ error: "Enter an app name or website" }, { status: 400 });
-  if (!apiKey) {
+  if (!isConfigured()) {
     return Response.json(
       { error: "Live generation is not configured: set ANTHROPIC_API_KEY on the server (see README)." },
       { status: 503 }
@@ -44,7 +43,8 @@ export async function POST(req: Request) {
           send({ type: "status", message: "Served from cache (generated in the last 6 hours). Use “Regenerate” for a fresh run." });
           send({ type: "done", guide: hit.guide });
         } else {
-          const guide = await runAgent(app, send, { apiKey, model, signal: req.signal });
+          send({ type: "status", message: `Model: ${modelName()}` });
+          const guide = await generateGuide(app, send, req.signal);
           cache.set(key, { at: Date.now(), guide });
         }
       } catch (e: any) {
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
         send({
           type: "error",
           message: /fetch failed|ECONNREFUSED|ENOTFOUND/i.test(msg)
-            ? "The server couldn't reach the Claude API. Check the network and ANTHROPIC_API_KEY, then try again."
+            ? "The server couldn't reach the model API. Check the network and the API key, then try again."
             : msg,
         });
       } finally {

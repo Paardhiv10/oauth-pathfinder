@@ -1,0 +1,383 @@
+{
+  "slug": "tiktok",
+  "name": "TikTok",
+  "website": "https://tiktok.com",
+  "category": "Social Media",
+  "mode": "generated",
+  "updatedAt": "2026-11-12",
+  "summary": "TikTok OAuth requires a formal app review before any external user can connect. Developers can test immediately in Sandbox mode, but production launch requires domain ownership verification, product and scope justifications, and a recorded demo video showing the full login flow.",
+  "verdict": {
+    "difficulty": 4,
+    "label": "Hard",
+    "timeToFirstConnection": "~1 hour (using Sandbox mode)",
+    "timeToProduction": "1-2 weeks (dependent on review time)",
+    "approvalWait": "Not published (TikTok official docs do not state expected app review turn-around times)",
+    "handsOnEffort": "3-5 hours",
+    "confidence": "medium"
+  },
+  "decideFirst": [
+    {
+      "question": "Will you test initially in Sandbox mode or prepare directly for Production?",
+      "guidance": "Use Sandbox mode to test OAuth flows instantly without waiting for app review. Switch to Production mode and submit for review when you are ready to allow external users to log in.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "doc-register"
+        ],
+        "note": "TikTok provides a Sandbox mode that bypasses app review for testing."
+      }
+    },
+    {
+      "question": "What target platform are you building for (Web, iOS, Android, or Desktop)?",
+      "guidance": "Redirect URI rules and PKCE requirements vary by platform. Desktop requires PKCE and loopback URIs (`localhost`). Mobile platforms use TikTok OpenSDK with Universal Links (iOS) or App Links (Android). Web requires static HTTPS URIs with no query parameters.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "doc-login-overview",
+          "doc-login-web"
+        ]
+      }
+    },
+    {
+      "question": "What permissions beyond basic user identity (`user.info.basic`) do you need?",
+      "guidance": "Basic profile info (`user.info.basic`) is the default baseline. Requesting higher-tier products like Content Posting API or Data Portability requires explicit pre-approval during app review and extra URL verification steps.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "doc-register",
+          "doc-login-overview"
+        ]
+      }
+    }
+  ],
+  "phases": [
+    {
+      "name": "1 · Developer Setup & Sandbox Testing",
+      "goal": "Register your application, configure Login Kit redirect URIs, and test the authorization flow in Sandbox mode.",
+      "duration": "1-2 hours",
+      "steps": [
+        {
+          "title": "Create a Developer Account & Organization",
+          "detail": "Sign up for a TikTok developer account. Create or join an Organization on TikTok for Developers to ensure shared app management across your team.",
+          "owner": "you",
+          "url": "https://developers.tiktok.com/signup",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "doc-register"
+            ]
+          }
+        },
+        {
+          "title": "Register a New App",
+          "detail": "In the Manage Apps console, click 'Connect an app', assign ownership to your Organization, and populate basic details including App Name, Icon (1024x1024), Category, and Description.",
+          "owner": "you",
+          "url": "https://developers.tiktok.com/apps",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "doc-register"
+            ]
+          }
+        },
+        {
+          "title": "Add Login Kit & Configure Redirect URIs",
+          "detail": "Add the Login Kit product to your app. Configure static HTTPS redirect URIs (up to 10 URIs, max 512 characters each, no query parameters or fragments).",
+          "owner": "agent",
+          "url": "https://developers.tiktok.com/doc/login-kit-web",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "doc-login-web"
+            ]
+          }
+        },
+        {
+          "title": "Test Authorization Flow in Sandbox",
+          "detail": "Toggle your app to Sandbox mode. Implement authorization calls pointing to `https://www.tiktok.com/v2/auth/authorize/` with `client_key`, `scope`, `redirect_uri`, `state`, and `response_type=code`. Verify access token exchange on your backend.",
+          "owner": "agent",
+          "url": "https://developers.tiktok.com/doc/login-kit-web",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "doc-register",
+              "doc-login-web"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 · Domain Ownership & Production Review Submission",
+      "goal": "Verify ownership of your site domains and submit your application for TikTok app review.",
+      "duration": "2-4 hours hands-on effort",
+      "steps": [
+        {
+          "title": "Verify Domain / URL Properties",
+          "detail": "Click 'URL properties' in the developer console. Verify ownership of your Terms of Service URL, Privacy Policy URL, and Web/Desktop URLs by uploading a signature file to your server or verifying domain prefixes.",
+          "owner": "you",
+          "url": "https://developers.tiktok.com/doc/getting-started-create-an-app#verify_url_ownership",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "doc-register"
+            ]
+          }
+        },
+        {
+          "title": "Record Demo Video of OAuth Integration",
+          "detail": "Record a demo video (1 to 5 videos, up to 50 MB each) demonstrating the complete end-to-end authorization flow, scope usage, and features within your app.",
+          "owner": "you",
+          "url": "https://developers.tiktok.com/doc/getting-started-create-an-app#submit_your_app_for_review",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "doc-register"
+            ]
+          }
+        },
+        {
+          "title": "Submit Production App for Review",
+          "detail": "Fill out detailed justifications explaining how each requested product and scope is used. Click 'Submit for review' under Production mode.",
+          "owner": "you",
+          "url": "https://developers.tiktok.com/doc/getting-started-create-an-app#submit_your_app_for_review",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "doc-register"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 · Review Monitoring & Production Release",
+      "goal": "Handle review feedback and go live to allow external TikTok users to authorize your integration.",
+      "duration": "Waiting period (Not published)",
+      "steps": [
+        {
+          "title": "Monitor App Review Status",
+          "detail": "Track app status in the portal (Draft -> In Review -> Live / Not Approved). If recalled or requested by TikTok reviewers, address comments and resubmit.",
+          "owner": "you",
+          "url": "https://developers.tiktok.com/apps",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "doc-register"
+            ]
+          }
+        },
+        {
+          "title": "Handle App Revisions",
+          "detail": "Once live, any future updates to products or scopes require creating a draft revision while keeping the current live version active.",
+          "owner": "agent",
+          "url": "https://developers.tiktok.com/doc/getting-started-create-an-app",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "doc-register"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "item": "TikTok Developer Account & Organization",
+      "requiredFor": "Creating and managing developer apps",
+      "note": "Registering apps under an Organization allows collaborative sandbox testing and shared management.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "doc-register"
+        ]
+      }
+    },
+    {
+      "item": "Domain Ownership Verification",
+      "requiredFor": "Submitting Production app for review",
+      "note": "Apps created after September 9, 2024 must verify Terms of Service, Privacy Policy, and Web domain URLs via signature file upload or domain prefix verification.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "doc-register"
+        ]
+      }
+    },
+    {
+      "item": "Demo Video Recording",
+      "requiredFor": "App Review submission",
+      "note": "Must show the end-to-end integration flow (1-5 files, max 50 MB per video).",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "doc-register"
+        ]
+      }
+    },
+    {
+      "item": "HTTPS Web Redirect URI",
+      "requiredFor": "Web OAuth integration",
+      "note": "Must be absolute, static (no query parameters or hash fragments), max 512 characters, starting with https://.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "doc-login-web"
+        ]
+      }
+    }
+  ],
+  "scopeTiers": [],
+  "blockers": [
+    {
+      "symptom": "Redirect URI rejected during portal setup",
+      "cause": "The URI contains query parameters, fragment identifiers (#), is non-HTTPS (for web), or exceeds 512 characters.",
+      "fix": "Provide a clean, static, absolute HTTPS URL without query strings (e.g. `https://example.com/auth/callback`).",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "doc-login-web"
+        ]
+      }
+    },
+    {
+      "symptom": "User callback returns an `error` query parameter",
+      "cause": "The user is ineligible for third-party TikTok login or authorization in their region/account type.",
+      "fix": "Handle the `error` and `error_description` fields gracefully in your callback handler and display a user-friendly error message.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "doc-login-web"
+        ]
+      }
+    }
+  ],
+  "nuances": [
+    {
+      "title": "PKCE Enforcement by Platform",
+      "detail": "PKCE (code_verifier and S256 code_challenge) is mandatory for Desktop, iOS, and Android applications. Web client integrations use confidential backend secrets and CSRF state parameters instead.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "doc-login-overview"
+        ]
+      }
+    },
+    {
+      "title": "Strict Redirect URI Format Restrictions",
+      "detail": "Web redirect URIs cannot contain query strings (`?id=1`) or fragments (`#100`). Each app allows a maximum of 10 static redirect URIs.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "doc-login-web"
+        ]
+      }
+    },
+    {
+      "title": "Production App Revisions",
+      "detail": "When modifying settings or scopes on an already approved 'Live' app, TikTok creates a 'Draft' revision. Your existing live version remains operational while the draft is submitted for review.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "doc-register"
+        ]
+      }
+    }
+  ],
+  "sources": [
+    {
+      "id": "doc-register",
+      "title": "Register Your App - TikTok for Developers",
+      "url": "https://developers.tiktok.com/doc/getting-started-create-an-app",
+      "kind": "official",
+      "retrieved": "fetched"
+    },
+    {
+      "id": "doc-login-overview",
+      "title": "Login Kit Overview - TikTok for Developers",
+      "url": "https://developers.tiktok.com/doc/login-kit-overview",
+      "kind": "official",
+      "retrieved": "fetched"
+    },
+    {
+      "id": "doc-login-web",
+      "title": "Web Integration Guide - TikTok for Developers",
+      "url": "https://developers.tiktok.com/doc/login-kit-web",
+      "kind": "official",
+      "retrieved": "fetched"
+    },
+    {
+      "id": "developer-portal",
+      "title": "TikTok for Developers Portal",
+      "url": "https://developers.tiktok.com/",
+      "kind": "official",
+      "retrieved": "fetched"
+    }
+  ],
+  "verification": {
+    "checked": [
+      "Agent ran 4 searches and read 5 pages on 2026-11-12",
+      "TikTok app review requires submitting a demo video (up to 50MB) and detailed product/scope explanations as verified on Register Your App.",
+      "Sandbox mode allows testing OAuth integrations without waiting for app review as confirmed on Register Your App.",
+      "Web redirect URIs must be static HTTPS endpoints under 512 characters without query strings as verified on Web Integration Guide."
+    ],
+    "corrected": [
+      "Confidence lowered from high to medium: web search was unavailable, so nothing outside the provider's own docs was checked."
+    ],
+    "unverified": [
+      "Exact review turnaround time for production app submission (not published in TikTok documentation).",
+      "Exact access token and refresh token lifetime durations (not detailed in the documentation read).",
+      "API rate limits per application or user token.",
+      "Link test got no response from 5 link(s) on developers.tiktok.com. The site may refuse automated requests; open them in a browser to confirm.",
+      "Web search was unavailable for this run. Only the provider's own documentation was read, so there are no outside reports on review times or common errors.",
+      "Nobody signed in to the provider's console or created an app for this guide. The steps are taken from the documentation, not from a setup attempt."
+    ]
+  },
+  "consoleUrl": "https://developers.tiktok.com/apps",
+  "docsUrl": "https://developers.tiktok.com/doc/getting-started-create-an-app",
+  "linkChecks": [
+    {
+      "url": "https://developers.tiktok.com/apps",
+      "label": "Developer console",
+      "status": null,
+      "result": "error",
+      "checkedAt": "2026-11-12T15:33:00.199Z"
+    },
+    {
+      "url": "https://developers.tiktok.com/doc/getting-started-create-an-app",
+      "label": "Main OAuth docs",
+      "status": null,
+      "result": "error",
+      "checkedAt": "2026-11-12T15:33:00.202Z"
+    },
+    {
+      "url": "https://developers.tiktok.com/doc/login-kit-overview",
+      "label": "Login Kit Overview - TikTok for Developers",
+      "status": null,
+      "result": "error",
+      "checkedAt": "2026-11-12T15:33:00.202Z"
+    },
+    {
+      "url": "https://developers.tiktok.com/doc/login-kit-web",
+      "label": "Web Integration Guide - TikTok for Developers",
+      "status": null,
+      "result": "error",
+      "checkedAt": "2026-11-12T15:33:00.203Z"
+    },
+    {
+      "url": "https://developers.tiktok.com/",
+      "label": "TikTok for Developers Portal",
+      "status": null,
+      "result": "error",
+      "checkedAt": "2026-11-12T15:33:00.203Z"
+    }
+  ],
+  "managedAuth": {
+    "status": "byo",
+    "toolkit": "Tiktok",
+    "slug": "tiktok",
+    "url": "https://docs.composio.dev/toolkits/managed-auth",
+    "checkedAt": "2026-11-12"
+  }
+}

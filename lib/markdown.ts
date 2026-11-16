@@ -13,6 +13,16 @@ export function guideToMarkdown(g: Guide): string {
   L.push(`| Production (any user) | ${g.verdict.timeToProduction} |`);
   L.push(`| Approval wait | ${g.verdict.approvalWait} |`);
   L.push(`| Hands-on effort | ${g.verdict.handsOnEffort} |`, "");
+  if (g.managedAuth) {
+    const m = g.managedAuth;
+    const line =
+      m.status === "managed"
+        ? `Composio provides a managed OAuth app for ${m.toolkit}, so you may not need your own. You still need your own app for your name on the consent screen, extra scopes, or a dedicated quota.`
+        : m.status === "byo"
+          ? `Composio supports ${m.toolkit} but you bring your own OAuth app, so this guide applies in full.`
+          : `Not in Composio's managed OAuth directory, so you need your own OAuth app.`;
+    L.push(`**Managed app:** ${line} ([directory](${m.url}), checked ${m.checkedAt})`, "");
+  }
   if (g.consoleUrl) L.push(`Developer console: ${g.consoleUrl}  `);
   if (g.docsUrl) L.push(`Main docs: ${g.docsUrl}`, "");
 
