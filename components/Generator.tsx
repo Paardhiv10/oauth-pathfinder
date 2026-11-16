@@ -9,6 +9,10 @@ type LogItem = { kind: string; text: string; sub?: string[]; ok?: boolean };
 
 const EXAMPLES = ["HubSpot", "Airtable", "Zoom", "Dropbox", "Calendly", "Strava"];
 
+function savedCode() {
+  try { return localStorage.getItem("accessCode") || ""; } catch { return ""; }
+}
+
 function host(u: string) {
   try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; }
 }
@@ -44,7 +48,7 @@ export function Generator() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ app: name.trim(), force, accessCode: code || undefined }),
+        body: JSON.stringify({ app: name.trim(), force, accessCode: code || savedCode() || undefined }),
       });
       if (!res.ok || !res.body) {
         const j = await res.json().catch(() => ({}));
@@ -81,6 +85,12 @@ export function Generator() {
     }
   }
 
+  // Ask the server whether a code is needed, and fill in one that arrived with the link.
+  useEffect(() => {
+    setCode(savedCode());
+    fetch("/api/generate").then((r) => r.json()).then((j) => setNeedsCode(Boolean(j.needsCode))).catch(() => {});
+  }, []);
+
   useEffect(() => {
     const a = params.get("app");
     if (a && !started.current) { started.current = true; run(a); }
@@ -101,6 +111,9 @@ export function Generator() {
           {running ? <><span className="spinner" aria-hidden />Researching</> : guide ? "Regenerate" : "Generate guide"}
         </button>
       </form>
+      {needsCode && !code && !running && (
+        <p className="search-hint">Generating a guide on this demo needs the access code from the submission note.</p>
+      )}
       {!running && !guide && !log.length && (
         <p className="search-hint">
           Try{" "}

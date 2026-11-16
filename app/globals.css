@@ -491,3 +491,11 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   color: var(--verified); border-color: color-mix(in srgb, var(--verified) 40%, transparent);
   background: color-mix(in srgb, var(--verified) 8%, var(--surface));
 }
+
+/* Typing headline */
+.typer { display: inline-block; white-space: nowrap; min-width: 8ch; }
+.caret { display: inline-block; width: 3px; height: 0.9em; margin-left: 3px; vertical-align: -0.08em; background: currentColor; opacity: 0.7; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .caret { display: none; } }
+
+.typer .hl:empty { display: none; }

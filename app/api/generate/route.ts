@@ -11,6 +11,11 @@ export const dynamic = "force-dynamic";
 const cache = new Map<string, { at: number; guide: Guide }>();
 const TTL = 6 * 60 * 60 * 1000;
 
+// Tells the generate page whether to show the access-code box.
+export function GET() {
+  return Response.json({ configured: isConfigured(), needsCode: Boolean(process.env.ACCESS_CODE) });
+}
+
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const app = String(body.app || "").trim().slice(0, 120);
@@ -24,7 +29,8 @@ export async function POST(req: Request) {
     );
   }
   if (process.env.ACCESS_CODE && body.accessCode !== process.env.ACCESS_CODE) {
-    return Response.json({ error: "This demo requires an access code." }, { status: 401 });
+    const error = body.accessCode ? "That access code was not accepted. Check it and try again." : "Enter the access code to generate a guide.";
+    return Response.json({ error }, { status: 401 });
   }
 
   const encoder = new TextEncoder();

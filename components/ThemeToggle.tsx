@@ -1,15 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 
-type Mode = "system" | "light" | "dark";
+type Mode = "light" | "dark";
 
 const ICONS: Record<Mode, React.ReactNode> = {
-  system: (
-    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden>
-      <rect x="3" y="4" width="18" height="12" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
-      <path d="M8 20h8M12 16v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  ),
   light: (
     <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden>
       <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="2" />
@@ -24,29 +18,25 @@ const ICONS: Record<Mode, React.ReactNode> = {
 };
 
 export function ThemeToggle() {
-  const [mode, setMode] = useState<Mode>("system");
+  const [mode, setMode] = useState<Mode>("light");
 
+  // No saved choice yet: start from the device setting, which the CSS also follows.
   useEffect(() => {
-    try {
-      const t = localStorage.getItem("theme");
-      if (t === "light" || t === "dark") setMode(t);
-    } catch {}
+    let saved: string | null = null;
+    try { saved = localStorage.getItem("theme"); } catch {}
+    if (saved === "light" || saved === "dark") setMode(saved);
+    else setMode(window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
   }, []);
 
   const choose = (m: Mode) => {
     setMode(m);
-    const root = document.documentElement;
-    if (m === "system") delete root.dataset.theme;
-    else root.dataset.theme = m;
-    try {
-      if (m === "system") localStorage.removeItem("theme");
-      else localStorage.setItem("theme", m);
-    } catch {}
+    document.documentElement.dataset.theme = m;
+    try { localStorage.setItem("theme", m); } catch {}
   };
 
   return (
     <div className="theme" role="radiogroup" aria-label="Color theme">
-      {(["system", "light", "dark"] as Mode[]).map((m) => (
+      {(["light", "dark"] as Mode[]).map((m) => (
         <button
           key={m}
           role="radio"

@@ -8,8 +8,9 @@ export const metadata: Metadata = {
   description: "How hard is it to get an OAuth app approved? Setup and approval guides for agent builders.",
 };
 
-// Runs before first paint so the saved theme never flashes.
-const themeScript = `(function(){try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}})();`;
+// Runs before first paint: applies the saved theme, and moves an access code from the link
+// (?code=...) into this browser's storage so the reviewer never has to type it.
+const themeScript = `(function(){try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;var u=new URL(location.href),c=u.searchParams.get("code");if(c){localStorage.setItem("accessCode",c);u.searchParams.delete("code");history.replaceState(null,"",u.pathname+u.search+u.hash);}}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

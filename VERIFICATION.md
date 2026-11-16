@@ -87,9 +87,13 @@ The `/api/generate` streaming route was also run end to end against a mock Anthr
 
 | Run | Result | What it showed |
 |---|---|---|
-| Calendly on `claude-haiku-5-5` | Moderate, medium confidence, 74s, 7 searches, 3 official pages read, 33 claims with none downgraded, 7 of 8 links reachable, about $0.10 | The full path works on the cheapest model. The guide left its scope-tiers section empty although it read Calendly's scopes page |
+| Calendly | Moderate, medium confidence, 74s, 7 searches, 3 official pages read, 33 claims with none downgraded, 7 of 8 links reachable, about $0.10 | The full path works on the cheapest model. The guide left its scope-tiers section empty although it read Calendly's scopes page |
 
-The guide is saved unedited in `data/generated/calendly.json`. `claude-sonnet-5-5` has not been run live.
+| TikTok | Moderate, medium confidence, 81s, 5 searches, 5 pages read, 40 claims with none downgraded, about $0.08. All 8 links gave no response to the link test | TikTok's developer site refuses automated requests. The guide reports that as "no response", not "broken", and asks the reader to open the links in a browser |
+| Plausible Analytics | Reported that Plausible has no OAuth for third-party apps, only per-team API keys on a paid plan. 63s, 4 searches, about $0.06 | The "no OAuth" case is handled. The grade came out as Gated, which fits "you cannot build this" better than it fits a review |
+| Typeform (on the deployed site) | Easy, medium confidence, 6 searches, 30 claims, 5 of 5 links reachable, about $0.08 | The deployed route works end to end, including the access code |
+
+All runs used `claude-haiku-5-5`. The first three guides are saved unedited in `data/generated/`. `claude-sonnet-5-5` has not been run live.
 
 ### On Gemini's free tier (12 Nov 2026), since removed
 
@@ -110,6 +114,6 @@ Why it was removed:
 - DuckDuckGo, the keyless search used instead, refused requests after about six searches from one address.
 - Gemini's free models returned "busy" often enough that a live run could not be relied on.
 
-The TikTok and Plausible Analytics guides in `data/generated/` are unedited output from those Gemini runs, kept because they show a hard case and a "no OAuth" case. They were not regenerated on Claude.
+None of the saved example guides come from these runs; all three were regenerated on Claude.
 
 `npm test` also covers the Composio lookup: exact names, typed variants ("Monday.com", "notion.so", "Gmail (Google)"), a bring-your-own entry that shares a prefix with a managed one ("Dropbox Sign"), and an unknown app.

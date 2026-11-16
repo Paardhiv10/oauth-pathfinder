@@ -1,181 +1,271 @@
 {
   "slug": "tiktok",
   "name": "TikTok",
-  "website": "https://tiktok.com",
-  "category": "Social Media",
+  "website": "https://developers.tiktok.com",
+  "category": "Social media / video",
   "mode": "generated",
-  "updatedAt": "2026-11-12",
-  "summary": "TikTok OAuth requires a formal app review before any external user can connect. Developers can test immediately in Sandbox mode, but production launch requires domain ownership verification, product and scope justifications, and a recorded demo video showing the full login flow.",
+  "updatedAt": "2026-11-16",
+  "summary": "Login Kit (TikTok's OAuth 2.0 login) is self-serve for your own account: you can register an app, add Login Kit, and test with a sandbox target user the same day. Opening it to any TikTok user requires submitting the app for TikTok review, which official docs put at several days to two weeks. If you also need to post content publicly, the separate Content Posting API audit decides the timeline, and TikTok does not publish its duration.",
   "verdict": {
-    "difficulty": 4,
-    "label": "Hard",
-    "timeToFirstConnection": "~1 hour (using Sandbox mode)",
-    "timeToProduction": "1-2 weeks (dependent on review time)",
-    "approvalWait": "Not published (TikTok official docs do not state expected app review turn-around times)",
-    "handsOnEffort": "3-5 hours",
+    "difficulty": 3,
+    "label": "Moderate",
+    "timeToFirstConnection": "Hours to about 1 day for your own account (sandbox target user, no review). Add a few hours if you need to set up URL verification first.",
+    "timeToProduction": "About 1 to 3 weeks for Login Kit: 1 to 3 days of your own setup, plus the official review window of several days to two weeks. Add an unpublished, open-ended audit wait if you need public posting through the Content Posting API.",
+    "approvalWait": "Official: review may take several days to two weeks after submission. Reported by a secondary source: Content Posting API audits of about 1 to 2 weeks for a clean submission. TikTok does not publish a duration for the Content Posting audit. Treat the secondary figure as unverified.",
+    "handsOnEffort": "About 1 to 3 days for you: create the developer account and organization, register the app, configure Login Kit and redirect URIs, verify URLs, write the review explanation, and record a demo video. The agent can draft the config, policy text, and review script, and handle token code.",
     "confidence": "medium"
   },
   "decideFirst": [
     {
-      "question": "Will you test initially in Sandbox mode or prepare directly for Production?",
-      "guidance": "Use Sandbox mode to test OAuth flows instantly without waiting for app review. Switch to Production mode and submit for review when you are ready to allow external users to log in.",
+      "question": "Do you need only sign-in and profile data (Login Kit), or do you also need to post videos (Content Posting API)?",
+      "guidance": "Login Kit alone goes through the standard app review. Posting through the Content Posting API adds a separate audit. Until that audit passes, all content from your client is restricted to private viewing. Decide this first, because it changes the timeline more than anything else.",
       "evidence": {
         "status": "verified",
         "sources": [
-          "doc-register"
+          "s5",
+          "s9"
         ],
-        "note": "TikTok provides a Sandbox mode that bypasses app review for testing."
+        "note": "The official FAQ and the Photo endpoint page both state the private-viewing restriction for unaudited clients. Whether you need that path is your decision."
       }
     },
     {
-      "question": "What target platform are you building for (Web, iOS, Android, or Desktop)?",
-      "guidance": "Redirect URI rules and PKCE requirements vary by platform. Desktop requires PKCE and loopback URIs (`localhost`). Mobile platforms use TikTok OpenSDK with Universal Links (iOS) or App Links (Android). Web requires static HTTPS URIs with no query parameters.",
+      "question": "Will the app be registered under an organization or your personal developer account?",
+      "guidance": "TikTok recommends an organization as the app owner and says personal registration is not recommended for real integrations. Create or join an organization before you register the app so ownership can transfer cleanly later.",
       "evidence": {
         "status": "verified",
         "sources": [
-          "doc-login-overview",
-          "doc-login-web"
+          "s2"
         ]
       }
     },
     {
-      "question": "What permissions beyond basic user identity (`user.info.basic`) do you need?",
-      "guidance": "Basic profile info (`user.info.basic`) is the default baseline. Requesting higher-tier products like Content Posting API or Data Portability requires explicit pre-approval during app review and extra URL verification steps.",
+      "question": "Which scopes do you need? user.info.basic only, or additional user data and video scopes?",
+      "guidance": "user.info.basic is added to every Login Kit app by default. Each additional scope must be requested and approved in your app's Scopes section, and approval alone does not give access to a user's data until that user authorizes it. Request the minimum set, because each extra scope is part of the review.",
       "evidence": {
         "status": "verified",
         "sources": [
-          "doc-register",
-          "doc-login-overview"
+          "s6",
+          "s10"
         ]
       }
     }
   ],
   "phases": [
     {
-      "name": "1 · Developer Setup & Sandbox Testing",
-      "goal": "Register your application, configure Login Kit redirect URIs, and test the authorization flow in Sandbox mode.",
-      "duration": "1-2 hours",
+      "name": "1 · Register the app and connect your own account",
+      "goal": "Get a client key and secret, enable Login Kit with a valid redirect URI, and complete an OAuth round trip with your own TikTok account.",
+      "duration": "Hours to 1 day (hands-on). No provider wait.",
       "steps": [
         {
-          "title": "Create a Developer Account & Organization",
-          "detail": "Sign up for a TikTok developer account. Create or join an Organization on TikTok for Developers to ensure shared app management across your team.",
+          "title": "Create a TikTok developer account",
+          "detail": "Sign up for a developer account with an email address. Accept the developer terms. The TikTok account you sign in with is separate from a consumer account.",
           "owner": "you",
           "url": "https://developers.tiktok.com/signup",
           "evidence": {
             "status": "verified",
             "sources": [
-              "doc-register"
+              "s2"
             ]
           }
         },
         {
-          "title": "Register a New App",
-          "detail": "In the Manage Apps console, click 'Connect an app', assign ownership to your Organization, and populate basic details including App Name, Icon (1024x1024), Category, and Description.",
+          "title": "Create or join an organization (recommended)",
+          "detail": "Create an organization that will own the app. You will choose it as the owner when you register the app.",
+          "owner": "you",
+          "url": "https://developers.tiktok.com/docs/en/working-with-organizations",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "s2"
+            ],
+            "note": "The official registration page recommends this step but does not require it. The organization guide URL was linked from the registration page; its contents were not read."
+          }
+        },
+        {
+          "title": "Register the app in Manage apps",
+          "detail": "Sign in, open Manage apps, click Connect an app, and select the owning organization. Fill in the app details (name, icon, category, description, and the website URL for Web). Note the client key and client secret from the Credentials section.",
           "owner": "you",
           "url": "https://developers.tiktok.com/apps",
           "evidence": {
             "status": "verified",
             "sources": [
-              "doc-register"
+              "s2",
+              "s21"
+            ],
+            "note": "The Manage apps link is on the official registration page."
+          }
+        },
+        {
+          "title": "Add the Login Kit product and register redirect URIs",
+          "detail": "In the Products section, add Login Kit and register a redirect URI for each platform you use. Web URIs must be absolute https URLs with no query parameters or fragments, and you can register up to 10. The agent can write the callback handler and state check.",
+          "owner": "you",
+          "url": "https://developers.tiktok.com/docs/en/login-kit-web",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "s2",
+              "s3"
             ]
           }
         },
         {
-          "title": "Add Login Kit & Configure Redirect URIs",
-          "detail": "Add the Login Kit product to your app. Configure static HTTPS redirect URIs (up to 10 URIs, max 512 characters each, no query parameters or fragments).",
+          "title": "Test with a sandbox and a target user",
+          "detail": "Switch to Sandbox mode, create a sandbox (up to 5 per app), and add your own TikTok account as a target user (up to 10 per sandbox). Authorize that account through Login Kit and run the authorization URL, code exchange, and a basic user info call. The agent can write and run this test.",
           "owner": "agent",
-          "url": "https://developers.tiktok.com/doc/login-kit-web",
+          "url": "https://developers.tiktok.com/docs/en/add-a-sandbox",
           "evidence": {
             "status": "verified",
             "sources": [
-              "doc-login-web"
-            ]
+              "s7",
+              "s12"
+            ],
+            "note": "The sandbox quota and target-user limit come from the official sandbox pages. One community guide says sandbox posts are limited to the owner's own account; that is consistent with sandbox scope, but it is not an official statement."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 · Prepare the app for external users",
+      "goal": "Make the app's public pages and review package complete enough that TikTok can approve it on the first pass.",
+      "duration": "1 to 3 days of hands-on work before you submit.",
+      "steps": [
+        {
+          "title": "Publish a Terms of Service page and a Privacy Policy",
+          "detail": "Publish both pages on your domain and enter their URLs in the app's basic information. The agent can draft the text, but you must review it and publish it under your legal authority.",
+          "owner": "you",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "s2"
+            ],
+            "note": "Official requirement: for apps created after September 9, 2024, the Terms of Service and Privacy Policy URLs must be verified. Whether your policies are adequate is a legal decision for you."
           }
         },
         {
-          "title": "Test Authorization Flow in Sandbox",
-          "detail": "Toggle your app to Sandbox mode. Implement authorization calls pointing to `https://www.tiktok.com/v2/auth/authorize/` with `client_key`, `scope`, `redirect_uri`, `state`, and `response_type=code`. Verify access token exchange on your backend.",
-          "owner": "agent",
-          "url": "https://developers.tiktok.com/doc/login-kit-web",
+          "title": "Verify URL properties",
+          "detail": "In Production mode, open URL properties and verify your domain (or a URL prefix by uploading a signature file). This is required for the Terms of Service URL, the Privacy Policy URL, and the Web URL. Any app that uses the Content Posting upload URL or Link Sharing must also verify those URLs.",
+          "owner": "you",
           "evidence": {
             "status": "verified",
             "sources": [
-              "doc-register",
-              "doc-login-web"
+              "s2"
+            ],
+            "note": "Verification needs DNS or file-upload control of the domain, so a human with domain access must do it."
+          }
+        },
+        {
+          "title": "Write the review explanation and record the demo video",
+          "detail": "In the App review section, explain how each product and scope is used in the app. Upload at least one demo video (up to 5 videos, 50 MB each) that shows the complete end-to-end login flow. The agent can draft the explanation and a click script. You record and upload the video.",
+          "owner": "you",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "s2",
+              "s5"
+            ],
+            "note": "Official review guidance states what must be explained and how many videos may be uploaded. The agent's draft content is not an official requirement."
+          }
+        },
+        {
+          "title": "Submit for review",
+          "detail": "Click Save, then Submit for review. The app enters In review and cannot be edited until review ends. You can recall it to Draft if you need to change something.",
+          "owner": "you",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "s2"
             ]
           }
         }
       ]
     },
     {
-      "name": "2 · Domain Ownership & Production Review Submission",
-      "goal": "Verify ownership of your site domains and submit your application for TikTok app review.",
-      "duration": "2-4 hours hands-on effort",
+      "name": "3 · Provider review",
+      "goal": "TikTok reviews the app and either sets it to Live or returns review comments.",
+      "duration": "Official: several days to two weeks after submission. Reported: longer for the Content Posting audit, which TikTok does not time publicly.",
       "steps": [
         {
-          "title": "Verify Domain / URL Properties",
-          "detail": "Click 'URL properties' in the developer console. Verify ownership of your Terms of Service URL, Privacy Policy URL, and Web/Desktop URLs by uploading a signature file to your server or verifying domain prefixes.",
-          "owner": "you",
-          "url": "https://developers.tiktok.com/doc/getting-started-create-an-app#verify_url_ownership",
+          "title": "Wait for review and monitor status",
+          "detail": "Track the status under Production: Draft, In review, Live, or Not approved. Until the app is Live, the APIs are not usable.",
+          "owner": "provider",
           "evidence": {
             "status": "verified",
             "sources": [
-              "doc-register"
+              "s5",
+              "s2"
+            ],
+            "note": "The official review timeline is several days to two weeks. A community source tied to a different TikTok product reports a 3 to 4 week window, which is not an official figure for Login Kit."
+          }
+        },
+        {
+          "title": "Respond to review comments and resubmit",
+          "detail": "If the app is not approved, open the History icon for the review comments, fix each item, and resubmit. The agent can make the code and copy changes. You must submit them.",
+          "owner": "you",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "s2",
+              "s5"
             ]
           }
         },
         {
-          "title": "Record Demo Video of OAuth Integration",
-          "detail": "Record a demo video (1 to 5 videos, up to 50 MB each) demonstrating the complete end-to-end authorization flow, scope usage, and features within your app.",
-          "owner": "you",
-          "url": "https://developers.tiktok.com/doc/getting-started-create-an-app#submit_your_app_for_review",
+          "title": "Request the Content Posting API audit (only if you post publicly)",
+          "detail": "Apply for the audit that lifts the private-viewing restriction. TikTok does not publish a duration for it. Community guides report about 1 to 2 weeks for clean submissions, but that figure is not official.",
+          "owner": "provider",
           "evidence": {
-            "status": "verified",
+            "status": "sourced",
             "sources": [
-              "doc-register"
-            ]
-          }
-        },
-        {
-          "title": "Submit Production App for Review",
-          "detail": "Fill out detailed justifications explaining how each requested product and scope is used. Click 'Submit for review' under Production mode.",
-          "owner": "you",
-          "url": "https://developers.tiktok.com/doc/getting-started-create-an-app#submit_your_app_for_review",
-          "evidence": {
-            "status": "verified",
-            "sources": [
-              "doc-register"
-            ]
+              "s5",
+              "s9",
+              "s14",
+              "s15"
+            ],
+            "note": "The official pages require the audit but do not give a timeline. Secondary guides disagree on the duration, so use a longer buffer for planning."
           }
         }
       ]
     },
     {
-      "name": "3 · Review Monitoring & Production Release",
-      "goal": "Handle review feedback and go live to allow external TikTok users to authorize your integration.",
-      "duration": "Waiting period (Not published)",
+      "name": "4 · Ship and keep it running",
+      "goal": "Serve real users reliably: refresh tokens in the background, handle revocation, and plan for user caps.",
+      "duration": "Agent build work of about 1 to 3 days, plus monitoring after launch.",
       "steps": [
         {
-          "title": "Monitor App Review Status",
-          "detail": "Track app status in the portal (Draft -> In Review -> Live / Not Approved). If recalled or requested by TikTok reviewers, address comments and resubmit.",
-          "owner": "you",
-          "url": "https://developers.tiktok.com/apps",
+          "title": "Build a server-side token refresh job",
+          "detail": "Store the access token, refresh token, open_id, scope, and expiry times for each user. Refresh the access token a little before it expires, and replace the stored refresh token each time you refresh. If the refresh fails with invalid_grant, send the user through login again.",
+          "owner": "agent",
+          "url": "https://developers.tiktok.com/docs/en/oauth-user-access-token-management",
           "evidence": {
             "status": "verified",
             "sources": [
-              "doc-register"
+              "s4",
+              "s8"
+            ],
+            "note": "The token lifetimes and rotation behavior are on the official user token page, and the refresh timing advice is on the official silent-login page. A secondary source reports a different access token lifetime; see nuances."
+          }
+        },
+        {
+          "title": "Add user revocation",
+          "detail": "Call the revoke endpoint when a user disconnects your app. The user will then no longer see the app under Manage app permissions.",
+          "owner": "agent",
+          "url": "https://developers.tiktok.com/docs/en/oauth-user-access-token-management",
+          "evidence": {
+            "status": "verified",
+            "sources": [
+              "s4"
             ]
           }
         },
         {
-          "title": "Handle App Revisions",
-          "detail": "Once live, any future updates to products or scopes require creating a draft revision while keeping the current live version active.",
-          "owner": "agent",
-          "url": "https://developers.tiktok.com/doc/getting-started-create-an-app",
+          "title": "Plan for the active user cap",
+          "detail": "New apps start with an active user cap. You can request an increase through the official support form, but only after the app is in production, and not every request is granted.",
+          "owner": "you",
+          "url": "https://developers.tiktok.com/docs/en/getting-started-faq",
           "evidence": {
             "status": "verified",
             "sources": [
-              "doc-register"
+              "s5"
             ]
           }
         }
@@ -184,193 +274,465 @@
   ],
   "requirements": [
     {
-      "item": "TikTok Developer Account & Organization",
-      "requiredFor": "Creating and managing developer apps",
-      "note": "Registering apps under an Organization allows collaborative sandbox testing and shared management.",
+      "item": "TikTok developer account",
+      "requiredFor": "Creating and managing any app",
+      "note": "Created by you with an email address.",
       "evidence": {
         "status": "verified",
         "sources": [
-          "doc-register"
+          "s2"
         ]
       }
     },
     {
-      "item": "Domain Ownership Verification",
-      "requiredFor": "Submitting Production app for review",
-      "note": "Apps created after September 9, 2024 must verify Terms of Service, Privacy Policy, and Web domain URLs via signature file upload or domain prefix verification.",
+      "item": "Organization as app owner",
+      "requiredFor": "Production apps",
+      "note": "Recommended by TikTok, not mandatory. Personal ownership is discouraged for real integrations.",
       "evidence": {
         "status": "verified",
         "sources": [
-          "doc-register"
+          "s2"
         ]
       }
     },
     {
-      "item": "Demo Video Recording",
-      "requiredFor": "App Review submission",
-      "note": "Must show the end-to-end integration flow (1-5 files, max 50 MB per video).",
+      "item": "Login Kit product with a valid redirect URI",
+      "requiredFor": "Any OAuth login for web, iOS, Android, or desktop",
+      "note": "Web URIs must be https, static, absolute, under 512 characters, and free of fragments. Up to 10 per app.",
       "evidence": {
         "status": "verified",
         "sources": [
-          "doc-register"
+          "s3"
         ]
       }
     },
     {
-      "item": "HTTPS Web Redirect URI",
-      "requiredFor": "Web OAuth integration",
-      "note": "Must be absolute, static (no query parameters or hash fragments), max 512 characters, starting with https://.",
+      "item": "Terms of Service URL and Privacy Policy URL, verified",
+      "requiredFor": "Submitting any app created after September 9, 2024",
+      "note": "The verification needs domain or file-upload control.",
       "evidence": {
         "status": "verified",
         "sources": [
-          "doc-login-web"
+          "s2"
+        ]
+      }
+    },
+    {
+      "item": "Demo video showing the full flow",
+      "requiredFor": "Submitting the app for review",
+      "note": "At least one video, up to 5, each up to 50 MB.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s2"
+        ]
+      }
+    },
+    {
+      "item": "App icon (1024 x 1024, JPEG or PNG, up to 5 MB)",
+      "requiredFor": "Basic information submission",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s2"
+        ]
+      }
+    },
+    {
+      "item": "Additional scope approval",
+      "requiredFor": "Any data or action beyond the default user.info.basic scope",
+      "note": "Requested per scope in the Scopes section, then reviewed.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s6",
+          "s1"
+        ]
+      }
+    },
+    {
+      "item": "Content Posting API product and audit",
+      "requiredFor": "Publishing public content for users through the API",
+      "note": "Until the audit passes, posts are restricted to private viewing.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s5",
+          "s9"
         ]
       }
     }
   ],
-  "scopeTiers": [],
-  "blockers": [
+  "scopeTiers": [
     {
-      "symptom": "Redirect URI rejected during portal setup",
-      "cause": "The URI contains query parameters, fragment identifiers (#), is non-HTTPS (for web), or exceeds 512 characters.",
-      "fix": "Provide a clean, static, absolute HTTPS URL without query strings (e.g. `https://example.com/auth/callback`).",
+      "tier": "Login only (default)",
+      "examples": "user.info.basic",
+      "consequence": "Added to all Login Kit apps by default. It returns only a limited set of profile fields: open_id, union_id, avatar fields, and display_name.",
       "evidence": {
         "status": "verified",
         "sources": [
-          "doc-login-web"
+          "s6",
+          "s10"
         ]
       }
     },
     {
-      "symptom": "User callback returns an `error` query parameter",
-      "cause": "The user is ineligible for third-party TikTok login or authorization in their region/account type.",
-      "fix": "Handle the `error` and `error_description` fields gracefully in your callback handler and display a user-friendly error message.",
+      "tier": "Additional user info and video scopes",
+      "examples": "Scopes beyond the default, requested in the app's Scopes section",
+      "consequence": "Each requested scope must be approved in review. Users must also grant each scope when they authorize.",
       "evidence": {
         "status": "verified",
         "sources": [
-          "doc-login-web"
+          "s1",
+          "s6"
+        ],
+        "note": "The specific scope names beyond user.info.basic were not read on the reference page, so no scope names are listed here."
+      }
+    },
+    {
+      "tier": "Content posting (video.publish and related)",
+      "examples": "Content Posting API direct post and upload",
+      "consequence": "Unaudited clients can post only to private accounts, as SELF_ONLY, and the attempt is blocked otherwise.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s9",
+          "s5"
+        ],
+        "note": "The per-day cap of 5 users for unaudited clients is from secondary sources only and is not verified against an official page."
+      }
+    },
+    {
+      "tier": "Data Portability API",
+      "examples": "Data request products on a user's behalf",
+      "consequence": "Requires a separate application with its own official timeline of about 3 to 4 weeks, plus Login Kit approval. Approval of one does not enable the other.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s11"
+        ]
+      }
+    }
+  ],
+  "blockers": [
+    {
+      "symptom": "invalid_request: Redirect_uri is not matched with the uri when requesting code.",
+      "cause": "The redirect URI in the authorization request, the token request, or the registered Login Kit settings differs.",
+      "fix": "Use the exact registered URI in both steps, with no extra parameters or fragments, and make sure the Web URI is https.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s4",
+          "s3"
+        ]
+      }
+    },
+    {
+      "symptom": "The callback returns an error parameter saying the user is not eligible for third-party login.",
+      "cause": "The user is not eligible, or the app is not yet approved for the requested use.",
+      "fix": "Handle the error on the callback, show a clear message, and check the app status under Production.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s3"
+        ],
+        "note": "The eligibility wording is from the official Login Kit web guide. The approval cause is an inference."
+      }
+    },
+    {
+      "symptom": "403 unaudited_client_can_only_post_to_private_accounts when publishing.",
+      "cause": "The client has not passed the Content Posting API audit, and the creator account is public.",
+      "fix": "Test with a private account and send SELF_ONLY for testing. For public posting, pass the audit.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s9"
+        ],
+        "note": "The error code and the private-account rule are on the official Photo endpoint page. The second-hand guidance on test accounts is secondary."
+      }
+    },
+    {
+      "symptom": "Token refresh fails with invalid_grant.",
+      "cause": "The refresh token is expired, has been revoked, or is an older token that was replaced by a rotated one.",
+      "fix": "Store the newest refresh token from each response and send the user through login again.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s8",
+          "s4"
+        ]
+      }
+    },
+    {
+      "symptom": "Approved for data portability, but the API still returns no access.",
+      "cause": "Login Kit approval is separate from the Data Portability application, and both must be approved.",
+      "fix": "Check the app page for both. If both are approved and access still fails, contact support with Data Portability API as the topic.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s11"
         ]
       }
     }
   ],
   "nuances": [
     {
-      "title": "PKCE Enforcement by Platform",
-      "detail": "PKCE (code_verifier and S256 code_challenge) is mandatory for Desktop, iOS, and Android applications. Web client integrations use confidential backend secrets and CSRF state parameters instead.",
+      "title": "Token lifetimes and rotation",
+      "detail": "The official user token page states that the access token is valid for 24 hours and the refresh token for 365 days. The refresh response can return a new refresh token, and the old one must not be reused. A secondary guide reports a 24-hour and 365-day lifetime as well, and an older snippet from the same official page listed 2 hours and 180 days. The current page text is the more recent source.",
       "evidence": {
         "status": "verified",
         "sources": [
-          "doc-login-overview"
+          "s4",
+          "s8"
+        ],
+        "note": "Conflict recorded. The fetched official page (last updated August 4, 2026) is the basis for this guide."
+      }
+    },
+    {
+      "title": "Per-user authorization, not per-app",
+      "detail": "Each TikTok user authorizes your app separately and gets their own tokens keyed by open_id. Approval of a scope does not grant access to anyone's data until that user consents.",
+      "evidence": {
+        "status": "verified",
+        "sources": [
+          "s6",
+          "s4"
         ]
       }
     },
     {
-      "title": "Strict Redirect URI Format Restrictions",
-      "detail": "Web redirect URIs cannot contain query strings (`?id=1`) or fragments (`#100`). Each app allows a maximum of 10 static redirect URIs.",
+      "title": "Redirect URI rules",
+      "detail": "Web redirect URIs must be absolute https, static (no query parameters), without a fragment, and under 512 characters. Up to 10 can be registered. Android redirects must be App Links or Deep Links, and iOS redirects must be Universal Links with the Associated Domains capability.",
       "evidence": {
         "status": "verified",
         "sources": [
-          "doc-login-web"
+          "s3",
+          "s2"
         ]
       }
     },
     {
-      "title": "Production App Revisions",
-      "detail": "When modifying settings or scopes on an already approved 'Live' app, TikTok creates a 'Draft' revision. Your existing live version remains operational while the draft is submitted for review.",
+      "title": "Unreleased apps are reviewed at TikTok's discretion",
+      "detail": "TikTok says beta, incomplete, or test apps are generally not approved for integration. For a new app with no launch yet, TikTok may require an integration assessment with reasoning and UX mockups, and may approve or reject at its discretion.",
       "evidence": {
         "status": "verified",
         "sources": [
-          "doc-register"
-        ]
+          "s5"
+        ],
+        "note": "This applies to apps that have not launched. It is the most likely reason a pre-launch app is rejected. The assessment is an official route, but its timeline is not published."
+      }
+    },
+    {
+      "title": "Policy on posting content",
+      "detail": "Until the Content Posting API audit passes, every post from your client is restricted to private viewing. A secondary guide says TikTok's content sharing rules do not allow utility tools that only upload to accounts the operator manages. If your agent is a posting tool for other people's accounts, check this with TikTok before you build it.",
+      "evidence": {
+        "status": "sourced",
+        "sources": [
+          "s5",
+          "s13"
+        ],
+        "note": "The utility-tool rule comes from a secondary source that quotes TikTok's content sharing guidelines. It was not checked against the official guidelines."
       }
     }
   ],
   "sources": [
     {
-      "id": "doc-register",
-      "title": "Register Your App - TikTok for Developers",
-      "url": "https://developers.tiktok.com/doc/getting-started-create-an-app",
+      "id": "s1",
+      "title": "TikTok Login Kit overview",
+      "url": "https://developers.tiktok.com/docs/en/login-kit-overview",
+      "kind": "official",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s2",
+      "title": "Register Your App (TikTok for Developers)",
+      "url": "https://developers.tiktok.com/docs/en/getting-started-create-an-app",
       "kind": "official",
       "retrieved": "fetched"
     },
     {
-      "id": "doc-login-overview",
-      "title": "Login Kit Overview - TikTok for Developers",
-      "url": "https://developers.tiktok.com/doc/login-kit-overview",
+      "id": "s3",
+      "title": "Login Kit for Web (TikTok for Developers)",
+      "url": "https://developers.tiktok.com/docs/en/login-kit-web",
       "kind": "official",
       "retrieved": "fetched"
     },
     {
-      "id": "doc-login-web",
-      "title": "Web Integration Guide - TikTok for Developers",
-      "url": "https://developers.tiktok.com/doc/login-kit-web",
+      "id": "s4",
+      "title": "User Access Token Management (TikTok for Developers)",
+      "url": "https://developers.tiktok.com/docs/en/oauth-user-access-token-management",
       "kind": "official",
       "retrieved": "fetched"
     },
     {
-      "id": "developer-portal",
-      "title": "TikTok for Developers Portal",
-      "url": "https://developers.tiktok.com/",
+      "id": "s5",
+      "title": "App Review FAQ (TikTok for Developers)",
+      "url": "https://developers.tiktok.com/docs/en/getting-started-faq",
       "kind": "official",
       "retrieved": "fetched"
+    },
+    {
+      "id": "s6",
+      "title": "Scopes Overview (TikTok for Developers)",
+      "url": "https://developers.tiktok.com/docs/en/scopes-overview",
+      "kind": "official",
+      "retrieved": "fetched"
+    },
+    {
+      "id": "s7",
+      "title": "Add a Sandbox (TikTok for Developers)",
+      "url": "https://developers.tiktok.com/docs/en/add-a-sandbox",
+      "kind": "official",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s8",
+      "title": "Silent Login (TikTok for Developers)",
+      "url": "https://developers.tiktok.com/docs/en/silent-login",
+      "kind": "official",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s9",
+      "title": "Content Posting API: Photo (TikTok for Developers)",
+      "url": "https://developers.tiktok.com/docs/en/content-posting-api-reference-photo-post?enter_method=left_navigation",
+      "kind": "official",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s10",
+      "title": "Migration Guidance for User Info APIs (TikTok for Developers)",
+      "url": "https://developers.tiktok.com/bulletin/user-info-scope-migration",
+      "kind": "official",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s11",
+      "title": "Data Portability API: Get Started (TikTok for Developers)",
+      "url": "https://developers.tiktok.com/docs/en/data-portability-api-get-started",
+      "kind": "official",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s12",
+      "title": "Introducing Sandbox Mode (TikTok for Developers blog)",
+      "url": "https://developers.tiktok.com/blog/introducing-sandbox",
+      "kind": "official",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s13",
+      "title": "Upload-Post: TikTok API Guide 2026",
+      "url": "https://www.upload-post.com/tiktok-api/",
+      "kind": "secondary",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s14",
+      "title": "BulkPublish: TikTok Content Posting API Developer Guide (2026)",
+      "url": "https://www.bulkpublish.com/blog/tiktok-content-posting-api/",
+      "kind": "secondary",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s15",
+      "title": "Phyllo: TikTok API Integration Guide 2026",
+      "url": "https://www.getphyllo.com/post/tiktok-api-integration-guide-2026-setup-endpoints-common-pitfalls",
+      "kind": "secondary",
+      "retrieved": "search-result"
+    },
+    {
+      "id": "s21",
+      "title": "TikTok for Developers Manage apps page",
+      "url": "https://developers.tiktok.com/apps",
+      "kind": "official",
+      "retrieved": "not-retrieved"
     }
   ],
   "verification": {
     "checked": [
-      "Agent ran 4 searches and read 5 pages on 2026-11-12",
-      "TikTok app review requires submitting a demo video (up to 50MB) and detailed product/scope explanations as verified on Register Your App.",
-      "Sandbox mode allows testing OAuth integrations without waiting for app review as confirmed on Register Your App.",
-      "Web redirect URIs must be static HTTPS endpoints under 512 characters without query strings as verified on Web Integration Guide."
+      "Agent ran 5 searches and read 5 pages on 2026-11-16",
+      "Fetched the official User Access Token Management page (token lifetimes, refresh rotation, revoke, error example).",
+      "Fetched the official Register Your App page (registration, redirect URIs, URL verification, review submission, status values).",
+      "Fetched the official Login Kit Web page (redirect URI rules, authorization parameters, not-eligible error).",
+      "Fetched the official Scopes Overview page (default scope, per-user authorization).",
+      "Fetched the official App Review FAQ (review timeline, unreleased-app rule, user caps, unaudited posting rule).",
+      "Confirmed sandbox limits (up to 5 sandboxes, up to 10 target users) from official pages.",
+      "Confirmed Content Posting private-viewing rule and error code from the official Photo endpoint page."
     ],
     "corrected": [
-      "Confidence lowered from high to medium: web search was unavailable, so nothing outside the provider's own docs was checked."
+      "Token lifetime conflict: an older snippet of the official token page listed a 2-hour access token and a 180-day refresh token. The fetched current page states 24 hours and 365 days, which matches the silent-login page and most secondary sources. The guide uses 24 hours and 365 days.",
+      "Review timeline conflict: the official FAQ says several days to two weeks. A data portability page gives 3 to 4 weeks for a different product application, and secondary guides give 1 to 2 weeks for the Content Posting audit. The guide reports the official figure for Login Kit and marks the audit timeline as unpublished.",
+      "Daily posting cap of 5 users for unaudited clients comes from secondary sources only and is not on an official page reviewed here."
     ],
     "unverified": [
-      "Exact review turnaround time for production app submission (not published in TikTok documentation).",
-      "Exact access token and refresh token lifetime durations (not detailed in the documentation read).",
-      "API rate limits per application or user token.",
-      "Link test got no response from 5 link(s) on developers.tiktok.com. The site may refuse automated requests; open them in a browser to confirm.",
-      "Web search was unavailable for this run. Only the provider's own documentation was read, so there are no outside reports on review times or common errors.",
+      "The Content Posting API audit duration (not published by TikTok in pages reviewed).",
+      "The full list of scope names beyond user.info.basic (the scopes reference page was not fetched).",
+      "Whether an organization-level business verification is required for Login Kit (only the minis-specific business verification was found, which does not apply here).",
+      "The exact step-by-step text of the App review form fields beyond what the registration page describes.",
+      "Whether the integration assessment for unreleased apps has a published timeline.",
+      "1 cited source(s) were not seen by the agent during research and may be from memory: TikTok for Developers Manage apps page",
+      "Link test got no response from 8 link(s) on developers.tiktok.com. The site may refuse automated requests; open them in a browser to confirm.",
       "Nobody signed in to the provider's console or created an app for this guide. The steps are taken from the documentation, not from a setup attempt."
     ]
   },
   "consoleUrl": "https://developers.tiktok.com/apps",
-  "docsUrl": "https://developers.tiktok.com/doc/getting-started-create-an-app",
+  "docsUrl": "https://developers.tiktok.com/docs/en/login-kit-web",
   "linkChecks": [
     {
       "url": "https://developers.tiktok.com/apps",
       "label": "Developer console",
       "status": null,
       "result": "error",
-      "checkedAt": "2026-11-12T15:33:00.199Z"
+      "checkedAt": "2026-11-16T06:52:17.336Z"
     },
     {
-      "url": "https://developers.tiktok.com/doc/getting-started-create-an-app",
+      "url": "https://developers.tiktok.com/docs/en/login-kit-web",
       "label": "Main OAuth docs",
       "status": null,
       "result": "error",
-      "checkedAt": "2026-11-12T15:33:00.202Z"
+      "checkedAt": "2026-11-16T06:52:17.339Z"
     },
     {
-      "url": "https://developers.tiktok.com/doc/login-kit-overview",
-      "label": "Login Kit Overview - TikTok for Developers",
+      "url": "https://developers.tiktok.com/docs/en/login-kit-overview",
+      "label": "TikTok Login Kit overview",
       "status": null,
       "result": "error",
-      "checkedAt": "2026-11-12T15:33:00.202Z"
+      "checkedAt": "2026-11-16T06:52:17.339Z"
     },
     {
-      "url": "https://developers.tiktok.com/doc/login-kit-web",
-      "label": "Web Integration Guide - TikTok for Developers",
+      "url": "https://developers.tiktok.com/docs/en/getting-started-create-an-app",
+      "label": "Register Your App (TikTok for Developers)",
       "status": null,
       "result": "error",
-      "checkedAt": "2026-11-12T15:33:00.203Z"
+      "checkedAt": "2026-11-16T06:52:17.340Z"
     },
     {
-      "url": "https://developers.tiktok.com/",
-      "label": "TikTok for Developers Portal",
+      "url": "https://developers.tiktok.com/docs/en/oauth-user-access-token-management",
+      "label": "User Access Token Management (TikTok for Developers)",
       "status": null,
       "result": "error",
-      "checkedAt": "2026-11-12T15:33:00.203Z"
+      "checkedAt": "2026-11-16T06:52:17.341Z"
+    },
+    {
+      "url": "https://developers.tiktok.com/docs/en/getting-started-faq",
+      "label": "App Review FAQ (TikTok for Developers)",
+      "status": null,
+      "result": "error",
+      "checkedAt": "2026-11-16T06:52:17.341Z"
+    },
+    {
+      "url": "https://developers.tiktok.com/docs/en/scopes-overview",
+      "label": "Scopes Overview (TikTok for Developers)",
+      "status": null,
+      "result": "error",
+      "checkedAt": "2026-11-16T06:52:17.342Z"
+    },
+    {
+      "url": "https://developers.tiktok.com/docs/en/add-a-sandbox",
+      "label": "Add a Sandbox (TikTok for Developers)",
+      "status": null,
+      "result": "error",
+      "checkedAt": "2026-11-16T06:52:17.342Z"
     }
   ],
   "managedAuth": {

@@ -34,7 +34,7 @@ The curated library works without a key. Live generation needs `ANTHROPIC_API_KE
 |---|---|
 | `ANTHROPIC_API_KEY` | Live generation on Claude with its built-in web search and fetch |
 | `ANTHROPIC_MODEL` | Optional; defaults to `claude-haiku-5-5`. `claude-sonnet-5-5` is stronger and costs more |
-| `ACCESS_CODE` | Optional; the generate page asks for it before running |
+| `ACCESS_CODE` | Optional; the generate page asks for it before running. A link ending in `?code=<the code>` fills it in for that browser |
 | `ANTHROPIC_BASE_URL` | Optional; used for testing against a mock API |
 
 ## What's in the library, and why these six

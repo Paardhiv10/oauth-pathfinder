@@ -2,6 +2,7 @@ import Link from "next/link";
 import { LIBRARY } from "@/lib/guides";
 import { AppSearch } from "@/components/AppSearch";
 import { Meter } from "@/components/Meter";
+import { Typewriter } from "@/components/Typewriter";
 import { generatedGuides } from "@/lib/generated";
 
 export default function Home() {
@@ -12,7 +13,7 @@ export default function Home() {
     <div className="home">
       <section className="hero glow-panel">
         <span className="eyebrow">OAuth setup &amp; approval guides</span>
-        <h1>Will your OAuth app take an hour or <span className="hl">a month?</span></h1>
+        <h1>Will your OAuth app take an hour or <Typewriter phrases={["a day?", "a week?", "a month?"]} /></h1>
         <p className="hero-sub">
           See what it takes before your users can click “Connect”: the steps, the reviews, the waits, and which parts an
           agent can do for you. If an app isn't in the library, an agent researches it live.
