@@ -166,7 +166,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   font: inherit; font-size: 1rem; color: var(--text);
 }
 .search input::placeholder { color: var(--muted); }
-.search .code-input { flex: 0 1 140px; border-left: 1px solid var(--border); padding-left: 12px; }
+.search .code-input { flex: 0 1 185px; border-left: 1px solid var(--border); padding-left: 12px; }
 .search-hint { margin-top: 12px; color: var(--text-2); font-size: 0.9rem; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .search-hint a { font-weight: 500; }
 .chip-btn {
