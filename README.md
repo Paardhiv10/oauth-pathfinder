@@ -2,7 +2,7 @@
 
 **How long will it take before your users can click "Connect"?**
 
-**Live:** https://oauth-pathfinder-kappa.vercel.app (generating a new guide asks for an access code)
+**Live:** https://oauthpathfinder.vercel.app (generating a new guide asks for an access code)
 
 You're building an AI agent and want users to connect GitHub, Gmail or LinkedIn. First you have to create an OAuth app with each provider, and some providers make you pass a review. OAuth Pathfinder tells you, for a given app:
 
